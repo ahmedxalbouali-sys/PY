@@ -1,21 +1,7 @@
 import FreeSimpleGUI as sg
 import os
+import choose_testing_method_Interface
 
-# --- Temporary display shown after valid file selection ---
-def temporary_display(selected_file):
-    layout = [
-        [sg.Text(f"File accepted:\n{selected_file}")],
-        [sg.Button("OK")]
-    ]
-
-    window = sg.Window("Temporary Display", layout, finalize=True)
-
-    while True:
-        event, _ = window.read()
-        if event in (sg.WINDOW_CLOSED, "OK"):
-            break
-
-    window.close()
 
 
 # --- File selection function ---
@@ -56,12 +42,15 @@ def select_valid_file():
 
             # File accepted
             window.close()
-            temporary_display(file_path)
+            choose_testing_method_Interface.choose_testing_method(file_path)
             return file_path
 
-# --- Example usage ---        
-#selected = select_valid_file()
-#if selected:
-#    print("User selected:", selected)
-#else:
-#    print("User cancelled.")
+
+
+#--- Example usage ---        
+
+selected = select_valid_file()
+if selected:
+    print("User selected:", selected)
+else:
+    print("User cancelled.")
