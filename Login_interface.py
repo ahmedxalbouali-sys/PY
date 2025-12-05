@@ -1,6 +1,7 @@
 import FreeSimpleGUI as sg
 import json
 import hashlib
+import Select_target_file
 
 # --- Load credentials ---
 def load_credentials(filename="credentials.json"):
@@ -16,17 +17,17 @@ def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 # --- Temporary dashboard (after login) ---
-def temporary_dashboard(username):
-    layout = [
-        [sg.Text(f"Welcome, {username}! (temporary dashboard)")],
-        [sg.Button("Logout")]
-    ]
-    window = sg.Window("Dashboard", layout, finalize=True)
-    while True:
-        event, _ = window.read()
-        if event in (sg.WIN_CLOSED, "Logout"):
-            break
-    window.close()
+# def temporary_dashboard(username):
+#    layout = [
+#        [sg.Text(f"Welcome, {username}! (temporary dashboard)")],
+#        [sg.Button("Logout")]
+#    ]
+#    window = sg.Window("Dashboard", layout, finalize=True)
+#    while True:
+#        event, _ = window.read()
+#        if event in (sg.WIN_CLOSED, "Logout"):
+#            break
+#    window.close()
 
 # --- Login interface function ---
 def run_login_interface(credentials_file="credentials.json"):
@@ -56,7 +57,8 @@ def run_login_interface(credentials_file="credentials.json"):
             if user_input == creds.get("username") and entered_hash == creds.get("password_hash"):
                 sg.popup("Login successful!")
                 window.close()
-                temporary_dashboard(user_input)
+#                temporary_dashboard(user_input)
+                selected = Select_target_file.select_valid_file()
                 return True
             else:
                 sg.popup_error("Invalid username or password")
