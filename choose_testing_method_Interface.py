@@ -7,11 +7,11 @@ import os
 def method_bruteforce(file_path):
     sg.popup("Bruteforce method activated!", f"Target file: {file_path}")
 
-def method_dictionary(file_path):
-    sg.popup("Dictionary method activated!", f"Target file: {file_path}")
+def method_default_wordlist(file_path):
+    sg.popup("Default wordlist method activated!", f"Target file: {file_path}")
 
-def method_hybrid(file_path):
-    sg.popup("Hybrid method activated!", f"Target file: {file_path}")
+def method_custom_wordlist(file_path):
+    sg.popup("Custom wordlist method activated!", f"Target file: {file_path}")
 
 
 
@@ -46,9 +46,9 @@ def choose_testing_method(file_path):
 
         [sg.Text("Choose Testing Method:", font=("Arial", 11))],
         [
-            sg.Button("Bruteforce Test", size=(18, 2)),
-            sg.Button("Dictionary Test", size=(18, 2)),
-            sg.Button("Hybrid Test", size=(18, 2)),
+            sg.Button("Test with brute force ", size=(18, 2)),
+            sg.Button("Test with default wordlist", size=(18, 2)),
+            sg.Button("Test with custom wordlist", size=(18, 2)),
         ],
 
         [sg.HorizontalSeparator()],
@@ -71,14 +71,14 @@ def choose_testing_method(file_path):
                 window["-FILE-"].update(file_path)
 
         # ----- Method Buttons -----
-        elif event == "Bruteforce Test":
+        elif event == "Test with brute force ":
             method_bruteforce(file_path)
 
-        elif event == "Dictionary Test":
-            method_dictionary(file_path)
+        elif event == "Test with default wordlist":
+            method_default_wordlist(file_path)
 
-        elif event == "Hybrid Test":
-            method_hybrid(file_path)
+        elif event == "Test with custom wordlist":
+            method_custom_wordlist(file_path)
 
     window.close()
 

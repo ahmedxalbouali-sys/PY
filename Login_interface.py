@@ -55,7 +55,6 @@ def run_login_interface(credentials_file="credentials.json"):
             entered_hash = hash_password(pass_input)
 
             if user_input == creds.get("username") and entered_hash == creds.get("password_hash"):
-                sg.popup("Login successful!")
                 window.close()
 #                temporary_dashboard(user_input)
                 selected = Select_target_file.select_valid_file()
