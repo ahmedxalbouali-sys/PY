@@ -131,5 +131,5 @@ def method_default_wordlist(file_path):
 
 
 # Example run
-file_path = "C:/Users/ahmed/Desktop/test.zip"
-method_default_wordlist(file_path)
+#file_path = "C:/Users/ahmed/Desktop/test.zip"
+#method_default_wordlist(file_path)
