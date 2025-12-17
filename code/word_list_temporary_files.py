@@ -26,16 +26,13 @@ def split_wordlist_into_temp_files(
     # 1. Basic validation
     if not os.path.isfile(wordlist_path):
         raise FileNotFoundError("Wordlist file does not exist")
-
     if num_temp_files <= 0:
         raise ValueError("Number of temporary files must be >= 1")
 
     # 2. Read the wordlist safely
     with open(wordlist_path, "r") as f:
         passwords = [line.strip() for line in f if line.strip()]
-
     total_passwords = len(passwords)
-
     if total_passwords == 0:
         raise ValueError("Wordlist is empty")
 
@@ -51,7 +48,6 @@ def split_wordlist_into_temp_files(
     # 5. Create temporary files
     temp_files = []
     for index, chunk in enumerate(chunks):
-
         # Create a temporary file
         temp_file = tempfile.NamedTemporaryFile(
             mode="w",

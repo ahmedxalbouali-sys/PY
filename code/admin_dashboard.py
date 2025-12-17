@@ -1,9 +1,9 @@
 import FreeSimpleGUI as sg
 
 
-def admin_dashboard(username):
+def admin_dashboard():
     layout = [
-        [sg.Text(f"Welcome ADMIN: {username}", font=("Arial", 14))],
+        [sg.Text(f"Welcome ADMIN: ", font=("Arial", 14))],
         [sg.Button("Logout")]
     ]
 
