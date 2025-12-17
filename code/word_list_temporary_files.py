@@ -1,43 +1,86 @@
 import os
 import tempfile
-from more_itertools import divide
+from more_itertools import chunked
 
-def split_wordlist_into_five(wordlist_path):
+
+def split_wordlist_into_temp_files(
+    wordlist_path: str,
+    num_temp_files: int = 5
+):
     """
-    Splits a wordlist into 5 temporary files with approximately
-    equal number of passwords.
+    Splits a wordlist into multiple temporary files
+    with approximately the same number of passwords.
 
-    Args:
-        wordlist_path (str): Path to the input wordlist file.
+    PARAMETERS:
+    wordlist_path : str
+        Path to the original wordlist file.
 
-    Returns:
-        list[str]: Paths to the 5 generated temporary files.
+    num_temp_files : int (default = 5)
+        Number of temporary files to create.
 
-    how to use:
-        temp_paths = split_wordlist_into_five("rockyou.txt")
+    RETURNS:
+    list[str]
+        A list of file paths for the created temporary files.
     """
 
-    # Read all passwords (strip removes newline)
-    with open(wordlist_path, "r", encoding="utf-8", errors="ignore") as f:
-        passwords = [line.rstrip("\n") for line in f]
+    # 1. Basic validation
+    if not os.path.isfile(wordlist_path):
+        raise FileNotFoundError("Wordlist file does not exist")
 
-    # Split into 5 almost equal parts
-    chunks = list(divide(5, passwords))
+    if num_temp_files <= 0:
+        raise ValueError("Number of temporary files must be >= 1")
 
+    # 2. Read the wordlist safely
+    with open(wordlist_path, "r") as f:
+        passwords = [line.strip() for line in f if line.strip()]
+
+    total_passwords = len(passwords)
+
+    if total_passwords == 0:
+        raise ValueError("Wordlist is empty")
+
+    # 3. Calculate chunk size
+    chunk_size = total_passwords // num_temp_files
+    # If division is not perfect, add 1 to avoid losing passwords in last chunk Ensure chunk size is at least 1
+    if total_passwords % num_temp_files != 0:
+        chunk_size += 1
+
+    # 4. Split the wordlist into chunks
+    chunks = list(chunked(passwords, chunk_size))
+
+    # 5. Create temporary files
     temp_files = []
+    for index, chunk in enumerate(chunks):
 
-    # Create 5 temporary files
-    for i, chunk in enumerate(chunks, start=1):
-        temp_fd, temp_path = tempfile.mkstemp(prefix=f"wordlist_part_{i}_", suffix=".txt")
-        temp_files.append(temp_path)
+        # Create a temporary file
+        temp_file = tempfile.NamedTemporaryFile(
+            mode="w",
+            delete=False,
+            encoding="utf-8",
+            prefix=f"wordlist_part_{index}_",
+            suffix=".txt"
+        )
 
-        with os.fdopen(temp_fd, "w", encoding="utf-8") as tmp:
-            for pwd in chunk:
-                tmp.write(pwd + "\n")
+        # Write passwords into the temp file
+        for password in chunk:
+            temp_file.write(password + "\n")
 
+        temp_file.close()
+
+        # Store path for later use
+        temp_files.append(temp_file.name)
+
+
+    # 6. Return list of temp file paths
     return temp_files
 
-temp_paths = split_wordlist_into_five("rockyou.txt")
 
-for path in temp_paths:
-    print("Created:", path)
+# Example usage
+#temp_lists = split_wordlist_into_temp_files(
+#    wordlist_path="C:\\Users\\ahmed\\Desktop\\New folder (2)\\wordlists\\rockyou.txt",
+#    num_temp_files=4
+#)
+
+#print("Temporary wordlists created:")
+#for path in temp_lists:
+#    print(path)

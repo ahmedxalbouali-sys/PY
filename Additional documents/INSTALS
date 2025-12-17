@@ -2,4 +2,6 @@ pip install pyzipper pikepdf py7zr more_itertools
 
 
 python -m pip install FreeSimpleGUI
-pip install pymongo
+
+python -m pip install pymongo
+pip install more_itertools
