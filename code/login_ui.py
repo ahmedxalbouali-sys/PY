@@ -18,11 +18,9 @@ def login_window():
     - Sends credentials to backend for verification
     - Redirects user based on role:
         • admin  -> admin dashboard
-        • user   -> file selection window
+        • user   -> Select target file interface
     """
 
-
-    # 1. Set GUI theme (visual style)
     sg.theme("DarkBlue3")
 
     # 2. Define window layout
@@ -62,18 +60,18 @@ def login_window():
     while True:
         event, values = window.read()
 
-        # ---- Exit conditions ----
+        # Exit conditions 
         if event in (sg.WINDOW_CLOSED, "Exit"):
             break
 
-        # ---- Login button pressed ----
+        # Login button pressed
         if event == "Login":
 
             # Retrieve user inputs
             username = values["-USER-"].strip()
             password = values["-PASS-"]
 
-            # Basic validation: empty fields
+            # empty fields
             if not username or not password:
                 window["-STATUS-"].update("Fill all fields")
                 continue
@@ -88,10 +86,9 @@ def login_window():
 
             # 6. Handle authentication result
             if success:
-                # Close login window before opening next interface
+                # Close login window 
                 window.close()
-
-                # ---- Role-based redirection ----
+                # Role-based redirection
                 if result == "admin":
                     admin_dashboard()
                 else:

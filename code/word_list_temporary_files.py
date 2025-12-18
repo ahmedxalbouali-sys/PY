@@ -3,14 +3,9 @@ import tempfile
 from more_itertools import chunked
 
 
-def split_wordlist_into_temp_files(
-    wordlist_path: str,
-    num_temp_files: int = 5
-):
+def split_wordlist_into_temp_files(wordlist_path: str,num_temp_files: int = 5):
     """
-    Splits a wordlist into multiple temporary files
-    with approximately the same number of passwords.
-
+    Splits a wordlist into multiple temporary files with approximately the same number of passwords.
     PARAMETERS:
     wordlist_path : str
         Path to the original wordlist file.

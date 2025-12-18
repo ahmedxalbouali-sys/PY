@@ -15,25 +15,21 @@ def login_user(username: str, password: str):
         (False, error_message)  -> if authentication fails
     """
 
-    # 1. Get database connection
+    # 1. database connection
     db = get_db()
     users = db.users
 
     # 2. Search for the user by username
     user = users.find_one({"username": username})
-    # the user does not exist
     if not user:
         return False, "User not found"
 
-    # 3. Extract the stored hashed password
+    # 3. get the stored hashed password
     stored_hash = user["password"]
 
     # 4. Verify the provided password
     if bcrypt.checkpw(password.encode("utf-8"), stored_hash):
-        # Authentication successful Return True and role 
         return True, user["role"]
-    
-    # Authentication failed
     return False, "Invalid password"
 
 # Example usage
