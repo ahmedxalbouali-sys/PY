@@ -7,7 +7,7 @@ import Select_target_file
 from login import login_user
 
 # Admin dashboard interface
-from admin_dashboard import admin_dashboard
+from admin_dashboard_ui import admin_dashboard
 
 
 def login_window():
