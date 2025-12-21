@@ -62,8 +62,8 @@ def select_valid_file():
 
 #--- Example usage ---        
 
-selected = select_valid_file()
-if selected:
-    print("User selected:", selected)
-else:
-    print("User cancelled.")
+#selected = select_valid_file()
+#if selected:
+#    print("User selected:", selected)
+#else:
+#    print("User cancelled.")
