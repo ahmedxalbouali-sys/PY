@@ -38,7 +38,7 @@ def choose_testing_method(file_path):
     def change_file():
         new_file = sg.popup_get_file(
             "Select another file",
-            file_types=(("Allowed Files", ".zip;.7z;*.pdf"),)
+            file_types=(("Allowed Files", "*.zip;*.7z;*.pdf"),)
         )
         #file exists and has valid extension
         if new_file and new_file.lower().endswith(valid_extensions):

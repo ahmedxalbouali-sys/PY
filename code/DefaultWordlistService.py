@@ -39,8 +39,10 @@ def is_file_protected(file_path):
 # Wordlist selection popup (MULTI wordlists, ORDERED)
 # -------------------------------------------------------
 def select_wordlist_popup(current_wordlists):
-    rockyou_path = "rockyou.txt"
-    crackstation_path = "crackstation.txt"
+
+    #THESE PATHS NEEDS TO BE CHANGED LATER WITH ABSOLUTE PATH
+    rockyou_path = "C:/Users/nourb/OneDrive/Bureau/CyberEng Learning/uniprojects/PY/wordlists/rockyou.txt"
+    crackstation_path = "C:/Users/nourb/OneDrive/Bureau/CyberEng Learning/uniprojects/PY/wordlists/crackstation.txt"
 
     layout = [
         [sg.Text("Selected wordlists (tested top → bottom)", font=("Arial", 12, "bold"))],
@@ -124,7 +126,8 @@ def default_wordlist_crack(file_path, wordlists, test_function, window):
 def method_default_wordlist(file_path):
 
     valid_ext = (".zip", ".7z", ".pdf")
-    default_wordlists = ["rockyou.txt"]
+    #THIS PATH NEEDS TO BE CHANGED LATER TO THE ABSOLUTE PATH
+    default_wordlists = ["C:/Users/nourb/OneDrive/Bureau/CyberEng Learning/uniprojects/PY/wordlists/rockyou.txt"]
 
     sg.theme("DarkBlue3")
 

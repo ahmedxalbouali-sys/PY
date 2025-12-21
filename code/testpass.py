@@ -3,6 +3,7 @@ import pikepdf
 import py7zr
 
 #   CONFIGURATION
+'''
 correct_password = "test123"
 wrong_password = "wrongpass123"
 
@@ -10,7 +11,7 @@ zip_file = "New folder (3).zip"
 pdf_file = "Rapport_23_24_VF_protected.pdf"
 seven_zip_file = "New folder (4).7z"
 
-
+'''
 
 #   ZIP TEST (pyzipper)
 def test_zip(path, pwd):
@@ -67,6 +68,7 @@ def test_7z(path, pwd):
         return True
     except:
         return False
+
 def is_7z_protected(path):
     try:
         with py7zr.SevenZipFile(path, mode="r") as zf:
@@ -103,6 +105,8 @@ def test_pdf(path, pwd):
         return False
     except:
         return False
+
+
 def is_pdf_protected(path):
     try:
         with pikepdf.open(path):

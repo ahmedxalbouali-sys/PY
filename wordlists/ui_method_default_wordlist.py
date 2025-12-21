@@ -1,4 +1,4 @@
-import FreeSimpleGUI as sg
+'''import FreeSimpleGUI as sg
 import time
 import os
 
@@ -14,7 +14,7 @@ def fake_default_wordlist_crack(target_file, wordlist_path):
 # -------------------------------------------------------
 # MAIN FUNCTION: Default Wordlist Tester Window
 # -------------------------------------------------------
-def method_default_wordlist(file_path):
+def method_default_wordlist2(file_path):
 
     valid_ext = (".zip", ".7z", ".pdf")
     default_wordlist = "C:\\Users\\ahmed\\Desktop\\New folder (2)\\rockyou.txt"
@@ -128,7 +128,7 @@ def method_default_wordlist(file_path):
 
     window.close()
 
-
+'''
 
 # Example run
 #file_path = "C:/Users/ahmed/Desktop/test.zip"

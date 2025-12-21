@@ -4,14 +4,14 @@ import choose_testing_method_Interface
 
 
 
-# File selection function 
+# File selection function
 def select_valid_file():
     """
     Displays a file selection window.
 
     - Allows user to browse and select a file
     - Accepts only ZIP, 7z, or PDF files
-    - Returns: 
+    - Returns:
     ---> the selected file path if valid
     ---> None if the user cancels
     """
@@ -23,7 +23,7 @@ def select_valid_file():
             # saves file path in key -FILE-
             sg.Input(key="-FILE-", enable_events=True),
             # browse button
-            sg.FileBrowse("Browse", file_types=(("Allowed Files", ".zip;.7z;*.pdf"),))
+            sg.FileBrowse("Browse", file_types=(("Allowed Files", "*.zip;*.7z;*.pdf"),))
         ],
         [sg.Button("Submit"), sg.Button("Cancel")]
     ]
