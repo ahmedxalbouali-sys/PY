@@ -28,7 +28,21 @@ def test_zip(path, pwd):
     except:
         return False
 
+def is_zip_protected(path):
+    """
+    - Checks if the given path is zip protected
+    - Returns:
+    ---> True if the password is correct
+    ---> False if the file isn't zip protected
+    """
+    try:
+        with pyzipper.AESZipFile(path) as zf:
+            return any(info.flag_bits & 0x1 for info in zf.infolist())
+    except:
+        return False
 
+
+'''
 print("\n========== ZIP TEST ==========\n")
 
 print("Wrong password:", wrong_password)
@@ -36,7 +50,7 @@ print("Result:", "Correct!" if test_zip(zip_file, wrong_password) else "Wrong pa
 
 print("\nCorrect password:", correct_password)
 print("Result:", "Correct!" if test_zip(zip_file, correct_password) else "Wrong password")
-
+'''
 
 
 #   7Z TEST (py7zr)
@@ -53,7 +67,14 @@ def test_7z(path, pwd):
         return True
     except:
         return False
+def is_7z_protected(path):
+    try:
+        with py7zr.SevenZipFile(path, mode="r") as zf:
+            return zf.password_protected
+    except:
+        return False
 
+'''
 # for test
 print("\n========== 7Z TEST ==========\n")
 
@@ -63,7 +84,7 @@ print("Result:", "Correct!" if test_7z(seven_zip_file, wrong_password) else "Wro
 print("\nCorrect password:", correct_password)
 print("Result:", "Correct!" if test_7z(seven_zip_file, correct_password) else "Wrong password")
 
-
+'''
 
 #   PDF TEST (pikepdf)
 def test_pdf(path, pwd):
@@ -82,8 +103,17 @@ def test_pdf(path, pwd):
         return False
     except:
         return False
+def is_pdf_protected(path):
+    try:
+        with pikepdf.open(path):
+            return False
+    except pikepdf.PasswordError:
+        return True
+    except:
+        return False
 
 
+'''
 print("\n========== PDF TEST ==========\n")
 
 print("Wrong password:", wrong_password)
@@ -91,7 +121,7 @@ print("Result:", "Correct!" if test_pdf(pdf_file, wrong_password) else "Wrong pa
 
 print("\nCorrect password:", correct_password)
 print("Result:", "Correct!" if test_pdf(pdf_file, correct_password) else "Wrong password")
-
+'''
 
 print("\n===============================")
 print("TESTING COMPLETE")

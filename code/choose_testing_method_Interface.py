@@ -1,12 +1,15 @@
 import FreeSimpleGUI as sg
 import os
 
+from DefaultWordlistService import method_default_wordlist
+
+
 # Placeholder method functions for testing 
 def method_bruteforce(file_path):
     sg.popup("Bruteforce method activated!", f"Target file: {file_path}")
 
 def method_dictionary(file_path):
-    sg.popup("Dictionary method activated!", f"Target file: {file_path}")
+    method_default_wordlist(file_path)
 
 def method_hybrid(file_path):
     sg.popup("Hybrid method activated!", f"Target file: {file_path}")
