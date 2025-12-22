@@ -127,7 +127,8 @@ def method_default_wordlist(file_path):
 
     valid_ext = (".zip", ".7z", ".pdf")
     #THIS PATH NEEDS TO BE CHANGED LATER TO THE ABSOLUTE PATH
-    default_wordlists = ["C:/Users/nourb/OneDrive/Bureau/CyberEng Learning/uniprojects/PY/wordlists/rockyou.txt"]
+    #default_wordlists = ["C:/Users/nourb/OneDrive/Bureau/CyberEng Learning/uniprojects/PY/wordlists/rockyou.txt"]
+    default_wordlists = ["C:/Users/ahmed/Desktop/New folder (2)/code/wordlists/rockyou.txt"]
 
     sg.theme("DarkBlue3")
 
@@ -247,3 +248,9 @@ def method_default_wordlist(file_path):
             testing = False
 
     window.close()
+
+# -------------------------------------------------------
+# test default wordlist service
+# -------------------------------------------------------   
+#file_path = "C:\\Users\\ahmed\\Desktop\\New folder (2)\\Target\\New folder (4).7z"
+#method_default_wordlist(file_path)

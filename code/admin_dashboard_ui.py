@@ -69,8 +69,5 @@ def admin_dashboard():
             # Optionally handle the selected file here
             return
 
-# ========================================================
-# TEMPORARY ENTRY POINT FOR TESTING
-# ========================================================
-if __name__ == "__main__":
-    admin_dashboard()
+# test the admin dashboard UI
+#admin_dashboard()
