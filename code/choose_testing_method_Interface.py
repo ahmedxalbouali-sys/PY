@@ -2,11 +2,9 @@ import FreeSimpleGUI as sg
 import os
 
 from DefaultWordlistService import method_default_wordlist
-
+from method_bruteforce import method_bruteforce 
 
 # Placeholder method functions for testing 
-def method_bruteforce(file_path):
-    sg.popup("Bruteforce method activated!", f"Target file: {file_path}")
 
 def method_dictionary(file_path):
     method_default_wordlist(file_path)
@@ -93,5 +91,5 @@ def choose_testing_method(file_path):
 
     window.close()
 
-#file_path = "C:/Users/ahmed/Desktop/test.zip"
-#choose_testing_method(file_path)
+file_path = "C:\\Users\\ahmed\\Desktop\\New folder (2)\\Target\\New folder (4).7z"
+choose_testing_method(file_path)
