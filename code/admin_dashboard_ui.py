@@ -1,71 +1,76 @@
 import FreeSimpleGUI as sg
 import Select_target_file
 
-
-# --------------------------------------------------------
+# ========================================================
 # ADMIN DASHBOARD WINDOW
-# --------------------------------------------------------
+# ========================================================
 def admin_dashboard():
     """
-    Displays the admin dashboard interface.
+    Admin dashboard interface.
 
-    The admin has two available actions:
-    1) Manage Users   -> Placeholder page (not implemented yet)
-    2) Test Passwords -> Redirects to the same file selection flow as normal users
+    Options:
+    1) Manage Users   -> Placeholder popup (to be implemented)
+    2) Test Passwords -> Redirects to file selection/testing UI (same as normal user)
     """
 
-    # Apply a consistent application theme
+    # Apply a theme for consistent look
     sg.theme("DarkBlue3")
 
-    # Define the dashboard layout
+    # -----------------------------
+    # Layout of the dashboard window
+    # -----------------------------
     layout = [
         # Title
-        [sg.Text("Admin Dashboard", font=("Arial", 14, "bold"), justification="center")],
-
-        # Visual separation
+        [sg.Text("Admin Dashboard", font=("Arial", 16, "bold"), justification="center")],
         [sg.HorizontalSeparator()],
-
-        # Instruction text
-        [sg.Text("Choose an action:", font=("Arial", 12))],
-
-        # Admin actions
+        # Action buttons
         [sg.Button("Manage Users", size=(30, 2))],
         [sg.Button("Test Passwords", size=(30, 2))],
+
     ]
 
-    # Create the dashboard window
+    # Create the window
     window = sg.Window(
         "Admin Dashboard",
         layout,
         element_padding=(10, 10),
-        margins=(30, 20),
+        margins=(35, 20),
         finalize=True
     )
 
-    # Event loop: waits for admin interaction
+    # -----------------------------
+    # Event loop
+    # -----------------------------
     while True:
         event, values = window.read()
 
-        # Handle window close (X button)
-        if event in (sg.WINDOW_CLOSED,):
-            break
-
-        # Admin chooses to manage users (feature not ready yet)
-        elif event == "Manage Users":
-            sg.popup(
-                "Manage Users page is not yet implemented.",
-                title="Coming Soon"
-            )
-
-        # Admin chooses to test passwords
-        elif event == "Test Passwords":
+        # Exit on window close or logout
+        if event in (sg.WINDOW_CLOSED, "Logout"):
             window.close()
+            return
+
+        # -----------------------------
+        # Manage Users (placeholder)
+        # -----------------------------
+        elif event == "Manage Users":
+            window.close() 
+            from manage_users_ui import manage_users_ui
+            manage_users_ui()
+            return
+
+
+        # -----------------------------
+        # Test Passwords
+        # -----------------------------
+        elif event == "Test Passwords":
+            window.close()  # Close dashboard
+            # Call the file selection function (user-facing UI)
             file_path = Select_target_file.select_valid_file()
-            break
+            # Optionally handle the selected file here
+            return
 
-    window.close()
-
-
-
-# TEST THE ADMIN DASHBOARD
+# ========================================================
+# TEMPORARY ENTRY POINT FOR TESTING
+# ========================================================
+if __name__ == "__main__":
     admin_dashboard()
