@@ -10,7 +10,9 @@ def method_dictionary(file_path):
     method_default_wordlist(file_path)
 
 def method_hybrid(file_path):
+
     sg.popup("Hybrid method activated!", f"Target file: {file_path}")
+
 
 
 
