@@ -1,7 +1,7 @@
 import FreeSimpleGUI as sg
 import os
 
-from DefaultWordlistService import method_default_wordlist
+from DefaultWordlistService_GUI import method_default_wordlist
 from method_bruteforce import method_bruteforce 
 
 # Placeholder method functions for testing 
