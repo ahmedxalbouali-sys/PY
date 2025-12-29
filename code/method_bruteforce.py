@@ -12,6 +12,9 @@ Features:
 - Safe cancellation
 - Clear result display
 
+Logging:
+- Adds a test attempt log when "Execute" is clicked (username, method, file_path)
+
 Author: Ahmed Bouali
 Date: 2025-12-22
 """
@@ -26,6 +29,10 @@ from bruteforce_engine import (
     DEFAULT_MAX_LEN,
     DEFAULT_THREADS
 )
+
+# NEW: centralized logging service
+from logging_service import add_test_log
+
 
 # ==========================================================
 # ADVANCED SETTINGS POPUP
@@ -75,7 +82,7 @@ def advanced_settings_popup(min_len, max_len, threads, mask):
 # ==========================================================
 # MAIN APPLICATION WINDOW
 # ==========================================================
-def method_bruteforce(file_path):
+def method_bruteforce(file_path, username):
 
     sg.theme("DarkBlue3")
 
@@ -154,6 +161,15 @@ def method_bruteforce(file_path):
                 min_len, max_len, threads, mask_string = res
 
         if event == "Execute" and not running[0]:
+            # -------------------------------
+            # LOGGING: record user test attempt
+            # -------------------------------
+            add_test_log(
+                username=username,
+                method="bruteforce",
+                target_file=file_path
+            )
+
             stop_flag.clear()
             progress[0] = 0
             result[0] = None
@@ -182,4 +198,4 @@ def method_bruteforce(file_path):
 # =================================================
 if __name__ == "__main__":
     file_path = "C:\\Users\\ahmed\\Desktop\\New folder (2)\\Target\\New folder (4).7z"
-    method_bruteforce(file_path)
+    method_bruteforce(file_path, username="admin")

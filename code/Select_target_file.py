@@ -5,7 +5,7 @@ import choose_testing_method_Interface
 
 
 # File selection function
-def select_valid_file():
+def select_valid_file(username):
     """
     Displays a file selection window.
 
@@ -55,7 +55,7 @@ def select_valid_file():
 
             # File accepted => call the testing method with that file
             window.close()
-            choose_testing_method_Interface.choose_testing_method(file_path)
+            choose_testing_method_Interface.choose_testing_method(file_path,username)
             return file_path
 
 

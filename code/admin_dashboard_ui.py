@@ -4,7 +4,7 @@ import Select_target_file
 # ========================================================
 # ADMIN DASHBOARD WINDOW
 # ========================================================
-def admin_dashboard():
+def admin_dashboard(username):
     """
     Admin dashboard interface.
 
@@ -65,10 +65,10 @@ def admin_dashboard():
         elif event == "Test Passwords":
             window.close()  # Close dashboard
             # Call the file selection function (user-facing UI)
-            file_path = Select_target_file.select_valid_file()
+            file_path = Select_target_file.select_valid_file(username)
             # Optionally handle the selected file here
             return
 
 # test the admin dashboard UI
 if __name__ == "__main__":
-    admin_dashboard()
+    admin_dashboard(username="admin")

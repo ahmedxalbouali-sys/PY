@@ -7,14 +7,21 @@ from DefaultWordlistService import (
     is_file_protected
 )
 
+# NEW: centralized logging service
+from logging_service import add_test_log
+
 
 # -------------------------------------------------------
 # Wordlist selection popup
 # -------------------------------------------------------
 def select_wordlist_popup(current_wordlists):
+    """
+    Popup allowing the user to select which wordlists
+    will be used for the default wordlist attack.
+    """
 
     rockyou_path = r"C:\Users\ahmed\Desktop\New folder (2)\wordlists\rockyou.txt"
-    crackstation_path = r"C:\Users\ahmed\Desktop\New folder (2)\wordlists\crackstation.txt.txt" 
+    crackstation_path = r"C:\Users\ahmed\Desktop\New folder (2)\wordlists\crackstation.txt.txt"
 
     layout = [
         [sg.Text("Selected wordlists (tested top → bottom)", font=("Arial", 12, "bold"))],
@@ -48,11 +55,13 @@ def select_wordlist_popup(current_wordlists):
                     sg.popup_error(f"Wordlist does not exist:\n{rockyou_path}")
                     continue
                 selected.append(rockyou_path)
+
             if values["-CRACK-"]:
                 if not os.path.exists(crackstation_path):
                     sg.popup_error(f"Wordlist does not exist:\n{crackstation_path}")
                     continue
                 selected.append(crackstation_path)
+
             if values["-OTHER-"] and values["-OTHER_PATH-"]:
                 other_path = values["-OTHER_PATH-"]
                 if not os.path.exists(other_path):
@@ -69,9 +78,18 @@ def select_wordlist_popup(current_wordlists):
 
 
 # -------------------------------------------------------
-# MAIN GUI FUNCTION
+# MAIN GUI FUNCTION — DEFAULT WORDLIST METHOD
 # -------------------------------------------------------
-def method_default_wordlist(file_path):
+def method_default_wordlist(file_path, username):
+    """
+    GUI entry point for the default wordlist password testing method.
+
+    This function:
+    - Allows wordlist selection
+    - Handles UI interaction
+    - Starts the cracking process
+    - Logs the test attempt when execution begins
+    """
 
     valid_ext = (".zip", ".7z", ".pdf")
     default_wordlists = [
@@ -91,10 +109,20 @@ def method_default_wordlist(file_path):
             sg.Button("Change wordlist", key="-SELECTED-")
         ],
         [sg.Text("Testing ... ", key="-STATUS-", font=("Arial", 11))],
-        [sg.ProgressBar(1000, orientation="h", size=(40, 20),
-                        key="-PROG-", bar_color=("#4CE66F", "#CCCCCC"))],
-        [sg.Text("", key="-RESULT-", font=("Arial", 12, "bold"),
-                 size=(45, 1), justification="center")],
+        [sg.ProgressBar(
+            1000,
+            orientation="h",
+            size=(40, 20),
+            key="-PROG-",
+            bar_color=("#4CE66F", "#CCCCCC")
+        )],
+        [sg.Text(
+            "",
+            key="-RESULT-",
+            font=("Arial", 12, "bold"),
+            size=(45, 1),
+            justification="center"
+        )],
         [sg.Push(),
          sg.Button("Begin", key="-BEGIN-", size=(8, 1)),
          sg.Button("Cancel", key="-CANCEL-", size=(8, 1))]
@@ -125,12 +153,26 @@ def method_default_wordlist(file_path):
                 "Wordlists: " + ", ".join(os.path.basename(w) for w in default_wordlists)
             )
 
+        # ---------------------------------------------------
+        # EXECUTE DEFAULT WORDLIST TEST
+        # ---------------------------------------------------
         if event == "-BEGIN-" and not testing:
-            # Check if all selected wordlists exist
+            # Validate wordlists existence
             missing_files = [wl for wl in default_wordlists if not os.path.exists(wl)]
             if missing_files:
-                sg.popup_error(f"Wordlist file(s) do not exist:\n" + "\n".join(missing_files))
+                sg.popup_error(
+                    "Wordlist file(s) do not exist:\n" + "\n".join(missing_files)
+                )
                 continue
+
+            # ---------------------------------------------------
+            # LOG THE TEST ATTEMPT (ONCE, BEFORE EXECUTION)
+            # ---------------------------------------------------
+            add_test_log(
+                username=username,
+                method="default_wordlist",
+                target_file=file_path
+            )
 
             testing = True
             window["-STATUS-"].update("Testing...")
@@ -168,9 +210,9 @@ def method_default_wordlist(file_path):
     window.close()
 
 
-# ============================
-# TEST THE GUI
-# ============================
+# -------------------------------------------------------
+# TEST RUN
+# -------------------------------------------------------
 if __name__ == "__main__":
     target_file = r"C:\Users\ahmed\Desktop\New folder (2)\Target\New folder (4).7z"
-    method_default_wordlist(target_file)
+    method_default_wordlist(target_file, username="admin")

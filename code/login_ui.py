@@ -90,9 +90,9 @@ def login_window():
                 window.close()
                 # Role-based redirection
                 if result == "admin":
-                    admin_dashboard()
+                    admin_dashboard(username)
                 else:
-                    target_file = Select_target_file.select_valid_file()
+                    target_file = Select_target_file.select_valid_file(username)
                 break  
 
             else:

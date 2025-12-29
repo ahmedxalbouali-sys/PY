@@ -5,7 +5,7 @@ from method_bruteforce import method_bruteforce
 from Custom_Wordlist_Gui import method_hybrid
 
 
-def choose_testing_method(file_path):
+def choose_testing_method(file_path,username):
     valid_extensions = (".zip", ".7z", ".pdf")
 
     def change_file():
@@ -51,17 +51,17 @@ def choose_testing_method(file_path):
                 window["-FILE-"].update(file_path)
 
         elif event == "Bruteforce Test":
-            method_bruteforce(file_path)
+            method_bruteforce(file_path, username)
 
         elif event == "Dictionary Test":
-            method_default_wordlist(file_path)
+            method_default_wordlist(file_path, username)
 
         elif event == "Hybrid Test":
-            method_hybrid(file_path)
+            method_hybrid(file_path,username)
 
     window.close()
 
 
 if __name__ == "__main__":
     file_path = r"C:\Users\ahmed\Desktop\New folder (2)\Target\New folder (4).7z"
-    choose_testing_method(file_path)
+    choose_testing_method(file_path, username="admin")
