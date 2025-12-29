@@ -104,4 +104,5 @@ def login_window():
 
 
 # Run login window directly 
-login_window()
+if __name__ == "__main__":
+    login_window()

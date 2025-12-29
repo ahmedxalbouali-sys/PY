@@ -70,4 +70,5 @@ def admin_dashboard():
             return
 
 # test the admin dashboard UI
-#admin_dashboard()
+if __name__ == "__main__":
+    admin_dashboard()

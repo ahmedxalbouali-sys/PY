@@ -122,5 +122,7 @@ def generate_custom_wordlist(user_prompts, output_file="generated_wordlist.txt")
     print(f"[✓] Total passwords generated: {len(generated)}")
 
 # EXAMPLE USAGE
-user_inputs = ["ahmed", "tunisia", "1999"]
-generate_custom_wordlist(user_inputs, output_file="custom_generated_wordlist.txt")
+if __name__ == "__main__":
+    user_inputs = ["ahmed", "tunisia", "1999"]
+    generate_custom_wordlist(user_inputs, output_file="custom_generated_wordlist.txt")
+

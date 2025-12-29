@@ -180,5 +180,6 @@ def method_bruteforce(file_path):
 # =================================================
 # TEST RUN
 # =================================================
-#file_path = "C:\\Users\\ahmed\\Desktop\\New folder (2)\\Target\\New folder (4).7z"
-#method_bruteforce(file_path)
+if __name__ == "__main__":
+    file_path = "C:\\Users\\ahmed\\Desktop\\New folder (2)\\Target\\New folder (4).7z"
+    method_bruteforce(file_path)
