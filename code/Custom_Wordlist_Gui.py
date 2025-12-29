@@ -4,6 +4,9 @@ import os
 from Creating_custom_word_list import generate_custom_wordlist
 from DefaultWordlistService import default_wordlist_crack, get_test_function, is_file_protected
 
+# NEW: centralized logging service
+from logging_service import add_test_log
+
 # =================================================
 # POPUP: INPUT MULTIPLE PASSWORD ELEMENTS
 # =================================================
@@ -82,7 +85,7 @@ def run_default_crack(file_path, wordlist_file, window):
 # =================================================
 # MAIN FUNCTION: HYBRID GUI
 # =================================================
-def method_hybrid(file_path):
+def method_hybrid(file_path, username="guest"):
     """
     Hybrid GUI function:
     - Allows changing target file
@@ -90,6 +93,7 @@ def method_hybrid(file_path):
     - Generates custom wordlist in background
     - Uses default_wordlist_crack to test passwords
     - Shows progress and status
+    - Logs the test attempt when execution begins
     """
     sg.theme("DarkBlue3")
 
@@ -167,6 +171,15 @@ def method_hybrid(file_path):
                 sg.popup_error("Please select an output file path!")
                 continue
 
+            # ---------------------------------------------------
+            # LOG THE TEST ATTEMPT (ONCE, BEFORE EXECUTION)
+            # ---------------------------------------------------
+            add_test_log(
+                username=username,
+                method="hybrid",
+                target_file=file_path
+            )
+
             # --- Start generation ---
             running_gen = True
             window["-STATUS-"].update("Phase 1: Generating custom wordlist...")
@@ -236,4 +249,4 @@ def method_hybrid(file_path):
 # =================================================
 if __name__ == "__main__":
     target_file = "C:/Users/ahmed/Desktop/Target/test.zip"
-    method_hybrid(target_file)
+    method_hybrid(target_file, username="admin")
