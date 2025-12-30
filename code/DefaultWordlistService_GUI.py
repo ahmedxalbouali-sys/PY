@@ -84,11 +84,12 @@ def method_default_wordlist(file_path, username):
     """
     GUI entry point for the default wordlist password testing method.
 
-    This function:
-    - Allows wordlist selection
-    - Handles UI interaction
-    - Starts the cracking process
-    - Logs the test attempt when execution begins
+    Responsibilities:
+    - Handle UI interactions
+    - Start cracking process
+    - Track progress visually
+    - Display final result
+    - Log test attempt
     """
 
     valid_ext = (".zip", ".7z", ".pdf")
@@ -108,14 +109,16 @@ def method_default_wordlist(file_path, username):
             sg.Push(),
             sg.Button("Change wordlist", key="-SELECTED-")
         ],
-        [sg.Text("Testing ... ", key="-STATUS-", font=("Arial", 11))],
-        [sg.ProgressBar(
-            1000,
-            orientation="h",
-            size=(40, 20),
-            key="-PROG-",
-            bar_color=("#4CE66F", "#CCCCCC")
-        )],
+        [sg.Text("Status: Idle", key="-STATUS-", font=("Arial", 11, "bold"))],
+        [
+            sg.ProgressBar(
+                100,                      # ✅ FIXED: real percentage
+                orientation="h",
+                size=(40, 20),
+                key="-PROG-",
+                bar_color=("#4CE66F", "#CCCCCC")
+            )
+        ],
         [sg.Text(
             "",
             key="-RESULT-",
@@ -131,13 +134,20 @@ def method_default_wordlist(file_path, username):
     window = sg.Window("Default wordlist tester", layout, finalize=True)
 
     testing = False
+    progress_value = 0  # ✅ Local progress tracker
 
     while True:
-        event, values = window.read(timeout=10)
+        event, values = window.read(timeout=50)
 
+        # -------------------------------------------
+        # Exit / Cancel
+        # -------------------------------------------
         if event in (sg.WINDOW_CLOSED, "-CANCEL-"):
             break
 
+        # -------------------------------------------
+        # Change target file
+        # -------------------------------------------
         if event == "-CHANGE-" and not testing:
             new_file = sg.popup_get_file(
                 "Choose file",
@@ -147,17 +157,19 @@ def method_default_wordlist(file_path, username):
                 file_path = new_file
                 window["-FILE-"].update(file_path)
 
+        # -------------------------------------------
+        # Change wordlists
+        # -------------------------------------------
         if event == "-SELECTED-" and not testing:
             default_wordlists = select_wordlist_popup(default_wordlists)
             window["-WL_LABEL-"].update(
                 "Wordlists: " + ", ".join(os.path.basename(w) for w in default_wordlists)
             )
 
-        # ---------------------------------------------------
-        # EXECUTE DEFAULT WORDLIST TEST
-        # ---------------------------------------------------
+        # -------------------------------------------
+        # Begin testing
+        # -------------------------------------------
         if event == "-BEGIN-" and not testing:
-            # Validate wordlists existence
             missing_files = [wl for wl in default_wordlists if not os.path.exists(wl)]
             if missing_files:
                 sg.popup_error(
@@ -165,9 +177,7 @@ def method_default_wordlist(file_path, username):
                 )
                 continue
 
-            # ---------------------------------------------------
-            # LOG THE TEST ATTEMPT (ONCE, BEFORE EXECUTION)
-            # ---------------------------------------------------
+            # Log test execution
             add_test_log(
                 username=username,
                 method="default_wordlist",
@@ -175,7 +185,8 @@ def method_default_wordlist(file_path, username):
             )
 
             testing = True
-            window["-STATUS-"].update("Testing...")
+            progress_value = 0
+            window["-STATUS-"].update("Status: Testing...")
             window["-RESULT-"].update("")
             window["-PROG-"].update(0)
 
@@ -198,7 +209,8 @@ def method_default_wordlist(file_path, username):
                 thread_limit=2
             )
 
-            window["-STATUS-"].update("Completed")
+            window["-STATUS-"].update("Status: Completed")
+            window["-PROG-"].update(100)
 
             if success:
                 window["-RESULT-"].update(f"✔ Password found: {password}")
@@ -206,6 +218,13 @@ def method_default_wordlist(file_path, username):
                 window["-RESULT-"].update("✘ Password NOT found")
 
             testing = False
+
+        # -------------------------------------------
+        # Progress update from worker threads
+        # -------------------------------------------
+        if event == "-PROGRESS-" and testing:
+            progress_value = min(progress_value + 1, 99)
+            window["-PROG-"].update(progress_value)
 
     window.close()
 
