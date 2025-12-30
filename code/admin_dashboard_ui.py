@@ -1,5 +1,7 @@
 import FreeSimpleGUI as sg
 import Select_target_file
+from admin_logs_viewer import admin_logs_viewer
+from manage_users_ui import manage_users_ui
 
 # ========================================================
 # ADMIN DASHBOARD WINDOW
@@ -8,28 +10,30 @@ def admin_dashboard(username):
     """
     Admin dashboard interface.
 
-    Options:
-    1) Manage Users   -> Placeholder popup (to be implemented)
-    2) Test Passwords -> Redirects to file selection/testing UI (same as normal user)
+    Behavior:
+    - Manage Users  -> Opens popup, dashboard stays open
+    - View Logs     -> Opens popup, dashboard stays open
+    - Test Passwords-> Closes dashboard and continues workflow
     """
 
-    # Apply a theme for consistent look
+    # Consistent UI theme
     sg.theme("DarkBlue3")
 
     # -----------------------------
-    # Layout of the dashboard window
+    # Dashboard layout
     # -----------------------------
     layout = [
-        # Title
         [sg.Text("Admin Dashboard", font=("Arial", 16, "bold"), justification="center")],
         [sg.HorizontalSeparator()],
-        # Action buttons
+
         [sg.Button("Manage Users", size=(30, 2))],
         [sg.Button("Test Passwords", size=(30, 2))],
-
+        [sg.Button("View Logs", size=(30, 2))],
     ]
 
-    # Create the window
+    # -----------------------------
+    # Create window
+    # -----------------------------
     window = sg.Window(
         "Admin Dashboard",
         layout,
@@ -38,37 +42,49 @@ def admin_dashboard(username):
         finalize=True
     )
 
-    # -----------------------------
+    # ====================================================
     # Event loop
-    # -----------------------------
+    # ====================================================
     while True:
-        event, values = window.read()
-
-        # Exit on window close or logout
-        if event in (sg.WINDOW_CLOSED, "Logout"):
-            window.close()
-            return
+        event, _ = window.read()
 
         # -----------------------------
-        # Manage Users (placeholder)
+        # Exit dashboard
+        # -----------------------------
+        if event == sg.WINDOW_CLOSED:
+            break
+
+        # -----------------------------
+        # Manage Users (POPUP)
+        # Dashboard stays open
         # -----------------------------
         elif event == "Manage Users":
-            window.close() 
-            from manage_users_ui import manage_users_ui
             manage_users_ui()
-            return
-
 
         # -----------------------------
-        # Test Passwords
+        # Test Passwords (FLOW CHANGE)
+        # Dashboard closes
         # -----------------------------
         elif event == "Test Passwords":
-            window.close()  # Close dashboard
-            # Call the file selection function (user-facing UI)
-            file_path = Select_target_file.select_valid_file(username)
-            # Optionally handle the selected file here
-            return
+            window.close()
+            Select_target_file.select_valid_file(username)
+            return  # stop dashboard execution
 
-# test the admin dashboard UI
+        # -----------------------------
+        # View Logs (POPUP)
+        # Dashboard stays open
+        # -----------------------------
+        elif event == "View Logs":
+            admin_logs_viewer()
+
+    # -----------------------------
+    # Cleanup
+    # -----------------------------
+    window.close()
+
+
+# ========================================================
+# TEST RUN
+# ========================================================
 if __name__ == "__main__":
     admin_dashboard(username="admin")
