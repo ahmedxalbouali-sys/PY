@@ -78,7 +78,8 @@ def run_default_crack(file_path, wordlist_file, window):
     )
 
     if success:
-        window.write_event_value("-CRACK_DONE-", (f"✔ Password found: {password}", password))
+        # Send both message and password to main thread
+        window.write_event_value("-CRACK_DONE-", (f"✔ Password FOUND: {password}", password))
     else:
         window.write_event_value("-CRACK_DONE-", ("✘ Password NOT found", None))
 
@@ -92,7 +93,7 @@ def method_hybrid(file_path, username="guest"):
     - Implement Elements for custom passwords
     - Generates custom wordlist in background
     - Uses default_wordlist_crack to test passwords
-    - Shows progress and status
+    - Shows a clear progress bar and status for each phase
     - Logs the test attempt when execution begins
     """
     sg.theme("DarkBlue3")
@@ -104,15 +105,18 @@ def method_hybrid(file_path, username="guest"):
     default_output = "custom_hybrid_wordlist.txt"
     progress_value = 0      # Progress bar simulation
 
+    # --------------------------
+    # Layout
+    # --------------------------
     layout = [
         [sg.Text("Selected Target File:", font=("Arial", 12, "bold"))],
-        [sg.Text(file_path, key="-FILE-", size=(60, 1))],
+        [sg.Text(file_path, key="-FILE-", size=(60, 1), text_color="white")],
         [sg.Button("Change File", key="-CHANGE-")],
         [sg.HorizontalSeparator()],
 
         [sg.Text("Progress:", font=("Arial", 11))],
         [sg.ProgressBar(100, orientation="h", size=(50, 20), key="-PROG-", bar_color=("#4CE66F", "#CCCCCC"))],
-        [sg.Text("", key="-STATUS-", size=(50, 1), text_color="#4CE66F")],
+        [sg.Text("Status: Idle", key="-STATUS-", size=(50, 1), text_color="#FFD700", font=("Arial", 11, "bold"))],
         [sg.HorizontalSeparator()],
 
         [sg.Text("Output Wordlist File:", font=("Arial", 11))],
@@ -171,19 +175,22 @@ def method_hybrid(file_path, username="guest"):
                 sg.popup_error("Please select an output file path!")
                 continue
 
-            # ---------------------------------------------------
+            # --------------------------
             # LOG THE TEST ATTEMPT (ONCE, BEFORE EXECUTION)
-            # ---------------------------------------------------
+            # --------------------------
             add_test_log(
                 username=username,
                 method="hybrid",
                 target_file=file_path
             )
 
-            # --- Start generation ---
+            # --------------------------
+            # Start generation phase
+            # --------------------------
             running_gen = True
-            window["-STATUS-"].update("Phase 1: Generating custom wordlist...")
-            window["-PROG-"].update(0)
+            progress_value = 0
+            window["-STATUS-"].update("Phase 1: Generating custom wordlist...", text_color="#00BFFF")
+            window["-PROG-"].update(progress_value)
 
             threading.Thread(
                 target=run_hybrid_generation,
@@ -197,10 +204,11 @@ def method_hybrid(file_path, username="guest"):
         if event == "-GEN_DONE-":
             running_gen = False
             wordlist_file = values[event]
-            window["-STATUS-"].update("Phase 2: Testing passwords...")
-            window["-PROG-"].update(0)
+            window["-STATUS-"].update("Phase 2: Testing passwords...", text_color="#FFA500")
+            progress_value = 0
+            window["-PROG-"].update(progress_value)
 
-            # --- Start cracking ---
+            # --- Start cracking phase ---
             running_crack = True
             threading.Thread(
                 target=run_default_crack,
@@ -213,7 +221,7 @@ def method_hybrid(file_path, username="guest"):
         # --------------------------
         if event == "-GEN_ERROR-":
             running_gen = False
-            window["-STATUS-"].update("")
+            window["-STATUS-"].update("Generation failed", text_color="red")
             sg.popup_error(f"Custom wordlist generation failed:\n{values[event]}")
 
         # --------------------------
@@ -222,23 +230,28 @@ def method_hybrid(file_path, username="guest"):
         if event == "-CRACK_DONE-":
             running_crack = False
             status_msg, password = values[event]
-            window["-STATUS-"].update("Completed")
+            window["-STATUS-"].update("Completed", text_color="#32CD32")
             window["-PROG-"].update(100)
-            sg.popup_ok(status_msg)
+            if password:
+                # Clear, obvious success message with password
+                sg.popup_ok(f"✅ Password FOUND: {password}", title="Result")
+            else:
+                # Clear, obvious failure message
+                sg.popup_ok("❌ Password NOT found", title="Result")
 
         # --------------------------
         # Event: Cracking Error
         # --------------------------
         if event == "-CRACK_ERROR-":
             running_crack = False
-            window["-STATUS-"].update("")
+            window["-STATUS-"].update("Cracking failed", text_color="red")
             sg.popup_error(f"Password cracking failed:\n{values[event]}")
 
         # --------------------------
-        # Simulate smooth progress bar while running
+        # Smooth progress bar while running
         # --------------------------
         if running_gen or running_crack:
-            progress_value = (progress_value + 1) % 101
+            progress_value = (progress_value + 2) % 101
             window["-PROG-"].update(progress_value)
 
     window.close()
