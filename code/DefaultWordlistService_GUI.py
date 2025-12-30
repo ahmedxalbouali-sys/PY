@@ -107,7 +107,7 @@ def method_default_wordlist(file_path, username):
         [
             sg.Text("Wordlists: rockyou.txt", font=("Arial", 11), key="-WL_LABEL-"),
             sg.Push(),
-            sg.Button("Change wordlist", key="-SELECTED-")
+            sg.Button("Select wordlist", key="-SELECTED-")
         ],
         [sg.Text("Status: Idle", key="-STATUS-", font=("Arial", 11, "bold"))],
         [

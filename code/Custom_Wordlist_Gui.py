@@ -9,7 +9,7 @@ from DefaultWordlistService import (
     is_file_protected
 )
 
-# Centralized logging service (already used correctly)
+# Centralized logging service
 from logging_service import add_test_log
 
 
@@ -18,8 +18,9 @@ from logging_service import add_test_log
 # =================================================
 def implement_elements_popup():
     """
-    Opens a modal popup allowing the user to input multiple password elements
-    (one per line).
+    Modal popup that allows the user to input password elements.
+
+    Each line represents one element (name, date, keyword, etc.).
 
     Returns:
         list[str] : cleaned elements
@@ -36,29 +37,22 @@ def implement_elements_popup():
         [sg.Push(), sg.Button("Apply"), sg.Button("Cancel")]
     ]
 
-    window = sg.Window(
-        "Implement Elements",
-        layout,
-        modal=True,
-        finalize=True
-    )
+    window = sg.Window("Implement Elements", layout, modal=True, finalize=True)
 
     while True:
         event, values = window.read()
 
-        # User closes or cancels
         if event in (sg.WINDOW_CLOSED, "Cancel"):
             window.close()
             return None
 
-        # User confirms input
         if event == "Apply":
             raw_inputs = values["-ELEMENTS-"].strip()
+
             if not raw_inputs:
                 sg.popup_error("Please enter at least one element.")
                 continue
 
-            # Clean and normalize inputs
             elements = [
                 line.strip()
                 for line in raw_inputs.splitlines()
@@ -70,14 +64,13 @@ def implement_elements_popup():
 
 
 # =================================================
-# THREAD FUNCTION: GENERATE CUSTOM WORDLIST
+# THREAD: GENERATE CUSTOM WORDLIST
 # =================================================
-def run_hybrid_generation(elements, output_path, window):
+def run_Custom_generation(elements, output_path, window):
     """
-    Background thread function.
+    Background thread responsible for generating the custom wordlist.
 
-    Generates a custom wordlist from user-defined elements and notifies
-    the GUI thread when finished or if an error occurs.
+    Communicates completion or error back to the GUI thread.
     """
     try:
         generate_custom_wordlist(elements, output_file=output_path)
@@ -87,13 +80,12 @@ def run_hybrid_generation(elements, output_path, window):
 
 
 # =================================================
-# THREAD FUNCTION: RUN DEFAULT WORDLIST CRACK
+# THREAD: RUN PASSWORD CRACKING
 # =================================================
 def run_default_crack(file_path, wordlist_file, window):
     """
-    Background cracking thread.
-
-    Uses the default cracking engine with the generated wordlist.
+    Background thread that runs the cracking engine
+    using the generated wordlist.
     """
     test_function = get_test_function(file_path)
 
@@ -114,29 +106,23 @@ def run_default_crack(file_path, wordlist_file, window):
     )
 
     if success:
-        window.write_event_value(
-            "-CRACK_DONE-",
-            (f"✔ Password FOUND: {password}", password)
-        )
+        window.write_event_value("-CRACK_DONE-", (f"✔ Password FOUND: {password}", password))
     else:
-        window.write_event_value(
-            "-CRACK_DONE-",
-            ("✘ Password NOT found", None)
-        )
+        window.write_event_value("-CRACK_DONE-", ("✘ Password NOT found", None))
 
 
 # =================================================
-# MAIN FUNCTION: HYBRID GUI METHOD
+# MAIN GUI FUNCTION: Custom METHOD
 # =================================================
-def method_hybrid(file_path, username="guest"):
+def method_Custom(file_path, username="guest"):
     """
-    Hybrid password testing method.
+    Custom password testing workflow.
 
-    Flow:
+    Steps:
     1. User defines password elements
-    2. Custom wordlist is generated
-    3. Target file is tested
-    4. Generated wordlist is DELETED after completion
+    2. Custom wordlist is generated automatically
+    3. File is tested using the generated list
+    4. Wordlist is deleted after completion
     """
 
     sg.theme("DarkBlue3")
@@ -144,12 +130,13 @@ def method_hybrid(file_path, username="guest"):
     # --------------------------
     # Runtime state variables
     # --------------------------
-    elements = []                 # User-defined password elements
-    running_gen = False           # Generation thread active
-    running_crack = False         # Cracking thread active
-    generated_wordlist = None     # Path of generated temp wordlist
+    elements = []                 # User-defined elements
+    running_gen = False           # Generation thread active flag
+    running_crack = False         # Cracking thread active flag
+    generated_wordlist = None     # Path to generated temporary wordlist
 
-    default_output = "custom_hybrid_wordlist.txt"
+    # Default output filename (automatic, no user choice)
+    default_output = "custom_Custom_wordlist.txt"
     progress_value = 0
 
     # --------------------------
@@ -160,6 +147,10 @@ def method_hybrid(file_path, username="guest"):
         [sg.Text(file_path, key="-FILE-", size=(60, 1), text_color="white")],
         [sg.Button("Change File", key="-CHANGE-")],
         [sg.HorizontalSeparator()],
+
+        # ---- HIDDEN OUTPUT FILE FIELD (REQUIRED BY LOGIC) ----
+        # User does NOT see or change this, but logic depends on it
+        [sg.Input(default_output, key="-OUT-", visible=False, disabled=True)],
 
         [sg.Text("Progress:", font=("Arial", 11))],
         [sg.ProgressBar(
@@ -178,17 +169,6 @@ def method_hybrid(file_path, username="guest"):
         )],
         [sg.HorizontalSeparator()],
 
-        [sg.Text("Output Wordlist File:", font=("Arial", 11))],
-        [
-            sg.Input(default_output, key="-OUT-", size=(40, 1)),
-            sg.FileSaveAs(
-                "Browse",
-                file_types=(("Text files", "*.txt"),),
-                default_extension=".txt"
-            )
-        ],
-        [sg.HorizontalSeparator()],
-
         [
             sg.Button("Implement Elements", key="-IMP-"),
             sg.Push(),
@@ -197,11 +177,7 @@ def method_hybrid(file_path, username="guest"):
         ]
     ]
 
-    window = sg.Window(
-        "Hybrid Wordlist Generator",
-        layout,
-        finalize=True
-    )
+    window = sg.Window("Custom Wordlist Generator", layout, finalize=True)
 
     # =================================================
     # EVENT LOOP
@@ -210,7 +186,7 @@ def method_hybrid(file_path, username="guest"):
         event, values = window.read(timeout=100)
 
         # --------------------------
-        # Close or cancel
+        # Exit handling
         # --------------------------
         if event in (sg.WINDOW_CLOSED, "-CANCEL-"):
             break
@@ -237,7 +213,7 @@ def method_hybrid(file_path, username="guest"):
                 sg.popup_ok(f"Implemented {len(elements)} elements successfully!")
 
         # --------------------------
-        # Execute test
+        # Execute custom test
         # --------------------------
         if event == "-EXEC-" and not (running_gen or running_crack):
             if not elements:
@@ -245,18 +221,14 @@ def method_hybrid(file_path, username="guest"):
                 continue
 
             output_path = values["-OUT-"].strip()
-            if not output_path:
-                sg.popup_error("Please select an output file path!")
-                continue
+            generated_wordlist = output_path
 
-            # Log test execution (ONCE)
+            # ---- LOG TEST ATTEMPT (ONCE) ----
             add_test_log(
                 username=username,
-                method="hybrid",
+                method="Custom",
                 target_file=file_path
             )
-
-            generated_wordlist = output_path
 
             running_gen = True
             progress_value = 0
@@ -267,21 +239,22 @@ def method_hybrid(file_path, username="guest"):
             window["-PROG-"].update(progress_value)
 
             threading.Thread(
-                target=run_hybrid_generation,
+                target=run_Custom_generation,
                 args=(elements, output_path, window),
                 daemon=True
             ).start()
 
         # --------------------------
-        # Generation done
+        # Generation completed
         # --------------------------
         if event == "-GEN_DONE-":
             running_gen = False
+            running_crack = True
+
             window["-STATUS-"].update(
                 "Phase 2: Testing passwords...",
                 text_color="#FFA500"
             )
-            running_crack = True
 
             threading.Thread(
                 target=run_default_crack,
@@ -298,7 +271,7 @@ def method_hybrid(file_path, username="guest"):
             sg.popup_error(values[event])
 
         # --------------------------
-        # Cracking completed (SUCCESS or FAILURE)
+        # Cracking completed
         # --------------------------
         if event == "-CRACK_DONE-":
             running_crack = False
@@ -307,7 +280,7 @@ def method_hybrid(file_path, username="guest"):
             window["-STATUS-"].update("Completed", text_color="#32CD32")
             window["-PROG-"].update(100)
 
-            # ---- CLEANUP TEMP WORDLIST ----
+            # ---- DELETE GENERATED WORDLIST ----
             if generated_wordlist and os.path.exists(generated_wordlist):
                 try:
                     os.remove(generated_wordlist)
@@ -325,7 +298,6 @@ def method_hybrid(file_path, username="guest"):
         if event == "-CRACK_ERROR-":
             running_crack = False
 
-            # ---- CLEANUP TEMP WORDLIST ----
             if generated_wordlist and os.path.exists(generated_wordlist):
                 try:
                     os.remove(generated_wordlist)
@@ -336,7 +308,7 @@ def method_hybrid(file_path, username="guest"):
             sg.popup_error(values[event])
 
         # --------------------------
-        # Progress bar animation
+        # Progress animation
         # --------------------------
         if running_gen or running_crack:
             progress_value = (progress_value + 2) % 101
@@ -350,4 +322,4 @@ def method_hybrid(file_path, username="guest"):
 # =================================================
 if __name__ == "__main__":
     target_file = "C:/Users/ahmed/Desktop/Target/test.zip"
-    method_hybrid(target_file, username="admin")
+    method_Custom(target_file, username="admin")

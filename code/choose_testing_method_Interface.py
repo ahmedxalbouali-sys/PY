@@ -2,7 +2,7 @@ import FreeSimpleGUI as sg
 
 from DefaultWordlistService_GUI import method_default_wordlist
 from method_bruteforce import method_bruteforce
-from Custom_Wordlist_Gui import method_hybrid
+from Custom_Wordlist_Gui import method_Custom
 
 
 def choose_testing_method(file_path,username):
@@ -29,7 +29,7 @@ def choose_testing_method(file_path,username):
         [
             sg.Button("Bruteforce Test", size=(18, 2)),
             sg.Button("Dictionary Test", size=(18, 2)),
-            sg.Button("Hybrid Test", size=(18, 2)),
+            sg.Button("Custom Test", size=(18, 2)),
         ],
 
         [sg.HorizontalSeparator()],
@@ -56,8 +56,8 @@ def choose_testing_method(file_path,username):
         elif event == "Dictionary Test":
             method_default_wordlist(file_path, username)
 
-        elif event == "Hybrid Test":
-            method_hybrid(file_path,username)
+        elif event == "Custom Test":
+            method_Custom(file_path,username)
 
     window.close()
 
