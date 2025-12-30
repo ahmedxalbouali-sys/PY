@@ -12,8 +12,8 @@ def admin_dashboard(username):
 
     Behavior:
     - Manage Users  -> Opens popup, dashboard stays open
-    - View Logs     -> Opens popup, dashboard stays open
     - Test Passwords-> Closes dashboard and continues workflow
+    - View Logs     -> Opens popup, dashboard stays open
     """
 
     # Consistent UI theme
@@ -46,7 +46,7 @@ def admin_dashboard(username):
     # Event loop
     # ====================================================
     while True:
-        event, _ = window.read()
+        event, _ = window.read()# _ means:unused we don't care about this variable 
 
         # -----------------------------
         # Exit dashboard

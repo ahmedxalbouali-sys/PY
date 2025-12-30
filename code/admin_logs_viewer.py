@@ -1,13 +1,3 @@
-"""
-admin_logs_viewer.py
-===================
-
-Admin-only GUI to view all activity logs from MongoDB.
-Displays logs in a read-only table with ability to refresh.
-
-Author: Ahmed Bouali
-"""
-
 import FreeSimpleGUI as sg
 from datetime import datetime
 from db.mongo import get_db
@@ -17,7 +7,7 @@ from db.mongo import get_db
 # ============================================================
 def fetch_all_logs():
     """
-    Fetch all logs from MongoDB collection "logs".
+    Fetch all logs from MongoDB.
     Returns a list of rows suitable for GUI Table.
 
     Each row format:
@@ -29,7 +19,7 @@ def fetch_all_logs():
         db = get_db()
         collection = db["logs"]  # ensure the collection name matches your logging
 
-        cursor = collection.find().sort("timestamp", -1)  # latest logs first
+        cursor = collection.find().sort("timestamp", -1)  # latest logs first A cursor is a database iterator that allows documents to be fetched lazily and efficiently without loading all results into memory.
 
         for log in cursor:
             username = log.get("username", "UNKNOWN")

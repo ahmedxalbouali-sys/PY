@@ -8,6 +8,7 @@ common_password_strings = [
     "letmein", "iloveyou", "qwerty", "monkey", "dragon",
     "ahmed", "mohamed", "nour", "alex", "john",
     "tunisia", "tunis", "paris", "london",
+    "qwert","qwerty","qwertyuiop","asdf","asdfgh","zxcv","zxcvbn",
     "1990", "1995", "2000", "2020", "2024", "2025", "2026"
 ]
 
