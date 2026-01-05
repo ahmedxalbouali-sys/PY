@@ -63,5 +63,5 @@ def choose_testing_method(file_path,username):
 
 
 if __name__ == "__main__":
-    file_path = r"C:\Users\ahmed\Desktop\New folder (2)\Target\New folder (4).7z"
+    file_path = r"C:/Users/ahmed/Desktop/New folder (2)/Target/New folder (3).zip"
     choose_testing_method(file_path, username="admin")

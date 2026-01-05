@@ -30,7 +30,7 @@ from bruteforce_engine import (
     DEFAULT_THREADS
 )
 
-# NEW: centralized logging service
+# Centralized logging service
 from logging_service import add_test_log
 
 
@@ -40,19 +40,20 @@ from logging_service import add_test_log
 def advanced_settings_popup(min_len, max_len, threads, mask):
     """
     Allows the user to configure advanced brute-force options.
+    NOTE: This popup is ONLY for settings, NOT for results.
     """
 
     layout = [
         [sg.Text("Advanced Bruteforce Settings", font=("Arial", 13, "bold"))],
         [sg.HorizontalSeparator()],
 
-        [sg.Text("Minimum length:"), sg.Input(min_len, size=(6,1), key="-MIN-")],
-        [sg.Text("Maximum length:"), sg.Input(max_len, size=(6,1), key="-MAX-")],
-        [sg.Text("Threads:"), sg.Input(threads, size=(6,1), key="-THREADS-")],
+        [sg.Text("Minimum length:"), sg.Input(min_len, size=(6, 1), key="-MIN-")],
+        [sg.Text("Maximum length:"), sg.Input(max_len, size=(6, 1), key="-MAX-")],
+        [sg.Text("Threads:"), sg.Input(threads, size=(6, 1), key="-THREADS-")],
 
         [sg.HorizontalSeparator()],
         [sg.Text("Mask pattern (use | per position):")],
-        [sg.Input(mask, size=(45,1), key="-MASK-")],
+        [sg.Input(mask, size=(45, 1), key="-MASK-")],
         [sg.Text("Example: a|bc||9", font=("Arial", 9, "italic"))],
 
         [sg.Push(), sg.Button("Apply"), sg.Button("Cancel")]
@@ -76,7 +77,7 @@ def advanced_settings_popup(min_len, max_len, threads, mask):
                     values["-MASK-"]
                 )
             except ValueError:
-                sg.popup_error("Invalid numeric input")
+                sg.popup_error("Invalid numeric input")  # settings-only popup (OK)
 
 
 # ==========================================================
@@ -99,13 +100,13 @@ def method_bruteforce(file_path, username):
 
     layout = [
         [sg.Text("Target file:", font=("Arial", 11, "bold"))],
-        [sg.Text(file_path, size=(70,1), key="-FILE-")],
+        [sg.Text(file_path, size=(70, 1), key="-FILE-")],
         [sg.Button("Change target file")],
 
         [sg.HorizontalSeparator()],
         [sg.Text("Status:"), sg.Text("Idle", key="-STATUS-")],
-        [sg.ProgressBar(100, size=(45,20), key="-PROG-")],
-        [sg.Text("", key="-RESULT-", font=("Arial", 12, "bold"))],
+        [sg.ProgressBar(100, size=(45, 20), key="-PROG-")],
+        [sg.Text("", key="-RESULT-", font=("Arial", 12, "bold"))],  # INLINE result display
 
         [sg.Button("Advanced Settings"),
          sg.Push(),
@@ -126,6 +127,12 @@ def method_bruteforce(file_path, username):
     # ENGINE THREAD
     # ======================================================
     def run_engine():
+        """
+        Runs the brute-force engine in a background thread.
+        Returns:
+        - password (str) if found
+        - None if not found
+        """
         res = brute_force_attack(
             file_path=file_path,
             min_len=min_len,
@@ -136,6 +143,7 @@ def method_bruteforce(file_path, username):
             progress_callback=progress_cb,
             stop_flag=stop_flag
         )
+
         result[0] = res
         running[0] = False
 
@@ -161,9 +169,7 @@ def method_bruteforce(file_path, username):
                 min_len, max_len, threads, mask_string = res
 
         if event == "Execute" and not running[0]:
-            # -------------------------------
-            # LOGGING: record user test attempt
-            # -------------------------------
+            # Log test attempt
             add_test_log(
                 username=username,
                 method="bruteforce",
@@ -176,22 +182,37 @@ def method_bruteforce(file_path, username):
             running[0] = True
 
             window["-STATUS-"].update("Running...")
-            window["-RESULT-"].update("")
+            window["-RESULT-"].update("")  # clear old result
 
             threading.Thread(target=run_engine, daemon=True).start()
 
+        # -------------------------------
+        # LIVE PROGRESS UPDATE
+        # -------------------------------
         if running[0]:
-            percent = int((progress[0] / max(total[0],1)) * 100)
+            percent = int((progress[0] / max(total[0], 1)) * 100)
             window["-PROG-"].update(percent)
-            window["-STATUS-"].update(f"Testing {progress[0]} / {total[0]-10} +-10")
+            window["-STATUS-"].update(
+                f"Testing {progress[0]} / {max(total[0] - 10, 0)} +-10"
+            )
 
+        # -------------------------------
+        # FINAL RESULT (NO POPUP)
+        # -------------------------------
         else:
             if result[0]:
-                window["-RESULT-"].update(f"✔ Password FOUND: {result[0]}", text_color="green")
+                window["-RESULT-"].update(
+                    f"✔ Password FOUND: {result[0]}",
+                    text_color="limegreen"
+                )
             elif progress[0] > 0:
-                window["-RESULT-"].update("✘ Password NOT found", text_color="red")
+                window["-RESULT-"].update(
+                    "✘ Password NOT found",
+                    text_color="red"
+                )
 
     window.close()
+
 
 # =================================================
 # TEST RUN
