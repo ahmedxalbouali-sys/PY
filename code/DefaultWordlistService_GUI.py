@@ -1,4 +1,5 @@
 import FreeSimpleGUI as sg
+import threading
 import os
 
 from DefaultWordlistService import (
@@ -7,19 +8,13 @@ from DefaultWordlistService import (
     is_file_protected
 )
 
-# NEW: centralized logging service
 from logging_service import add_test_log
 
 
-# -------------------------------------------------------
-# Wordlist selection popup
-# -------------------------------------------------------
+# -----------------------------
+# WORDLIST SELECTION POPUP
+# -----------------------------
 def select_wordlist_popup(current_wordlists):
-    """
-    Popup allowing the user to select which wordlists
-    will be used for the default wordlist attack.
-    """
-
     rockyou_path = r"C:\Users\ahmed\Desktop\New folder (2)\wordlists\rockyou.txt"
     crackstation_path = r"C:\Users\ahmed\Desktop\New folder (2)\wordlists\crackstation.txt.txt"
 
@@ -27,11 +22,9 @@ def select_wordlist_popup(current_wordlists):
         [sg.Text("Selected wordlists (tested top → bottom)", font=("Arial", 12, "bold"))],
         [sg.Checkbox("RockYou", key="-ROCK-", default=(rockyou_path in current_wordlists))],
         [sg.Checkbox("CrackStation", key="-CRACK-", default=(crackstation_path in current_wordlists))],
-        [
-            sg.Checkbox("Other", key="-OTHER-"),
-            sg.Input(key="-OTHER_PATH-", size=(25, 1), disabled=True),
-            sg.FileBrowse("Browse", file_types=(("Wordlists", "*.txt"),))
-        ],
+        [sg.Checkbox("Other", key="-OTHER-"),
+         sg.Input(key="-OTHER_PATH-", size=(25, 1), disabled=True),
+         sg.FileBrowse("Browse", file_types=(("Wordlists", "*.txt"),))],
         [sg.HorizontalSeparator()],
         [sg.Push(), sg.Button("Confirm"), sg.Button("Cancel")]
     ]
@@ -40,7 +33,6 @@ def select_wordlist_popup(current_wordlists):
 
     while True:
         event, values = window.read()
-
         if event in (sg.WINDOW_CLOSED, "Cancel"):
             window.close()
             return current_wordlists
@@ -77,21 +69,29 @@ def select_wordlist_popup(current_wordlists):
             return selected
 
 
-# -------------------------------------------------------
-# MAIN GUI FUNCTION — DEFAULT WORDLIST METHOD
-# -------------------------------------------------------
+# -----------------------------
+# THREAD: RUN CRACKING ENGINE
+# -----------------------------
+def run_cracking_thread(file_path, wordlists, test_function, window):
+    """
+    Runs default_wordlist_crack() in a background thread
+    """
+    password, success = default_wordlist_crack(
+        file_path,
+        wordlists,
+        test_function,
+        window,
+        thread_limit=2
+    )
+
+    # Notify GUI that cracking finished
+    window.write_event_value("-DONE-", (password, success))
+
+
+# -----------------------------
+# MAIN GUI FUNCTION
+# -----------------------------
 def method_default_wordlist(file_path, username):
-    """
-    GUI entry point for the default wordlist password testing method.
-
-    Responsibilities:
-    - Handle UI interactions
-    - Start cracking process
-    - Track progress visually
-    - Display final result
-    - Log test attempt
-    """
-
     valid_ext = (".zip", ".7z", ".pdf")
     default_wordlists = [
         r"C:\Users\ahmed\Desktop\New folder (2)\wordlists\rockyou.txt"
@@ -104,28 +104,12 @@ def method_default_wordlist(file_path, username):
         [sg.Text(file_path, key="-FILE-", text_color="white")],
         [sg.Button("Change file", key="-CHANGE-")],
         [sg.HorizontalSeparator()],
-        [
-            sg.Text("Wordlists: rockyou.txt", font=("Arial", 11), key="-WL_LABEL-"),
-            sg.Push(),
-            sg.Button("Select wordlist", key="-SELECTED-")
-        ],
+        [sg.Text("Wordlists: rockyou.txt", font=("Arial", 11), key="-WL_LABEL-"),
+         sg.Push(),
+         sg.Button("Select wordlist", key="-SELECTED-")],
         [sg.Text("Status: Idle", key="-STATUS-", font=("Arial", 11, "bold"))],
-        [
-            sg.ProgressBar(
-                100,                      # ✅ FIXED: real percentage
-                orientation="h",
-                size=(40, 20),
-                key="-PROG-",
-                bar_color=("#4CE66F", "#CCCCCC")
-            )
-        ],
-        [sg.Text(
-            "",
-            key="-RESULT-",
-            font=("Arial", 12, "bold"),
-            size=(45, 1),
-            justification="center"
-        )],
+        [sg.ProgressBar(100, orientation="h", size=(40, 20), key="-PROG-", bar_color=("#4CE66F", "#CCCCCC"))],
+        [sg.Text("", key="-RESULT-", font=("Arial", 12, "bold"), size=(45, 1), justification="center")],
         [sg.Push(),
          sg.Button("Begin", key="-BEGIN-", size=(8, 1)),
          sg.Button("Cancel", key="-CANCEL-", size=(8, 1))]
@@ -134,20 +118,15 @@ def method_default_wordlist(file_path, username):
     window = sg.Window("Default wordlist tester", layout, finalize=True)
 
     testing = False
-    progress_value = 0  # ✅ Local progress tracker
+    progress_value = 0
 
     while True:
         event, values = window.read(timeout=50)
 
-        # -------------------------------------------
-        # Exit / Cancel
-        # -------------------------------------------
         if event in (sg.WINDOW_CLOSED, "-CANCEL-"):
             break
 
-        # -------------------------------------------
         # Change target file
-        # -------------------------------------------
         if event == "-CHANGE-" and not testing:
             new_file = sg.popup_get_file(
                 "Choose file",
@@ -157,18 +136,14 @@ def method_default_wordlist(file_path, username):
                 file_path = new_file
                 window["-FILE-"].update(file_path)
 
-        # -------------------------------------------
         # Change wordlists
-        # -------------------------------------------
         if event == "-SELECTED-" and not testing:
             default_wordlists = select_wordlist_popup(default_wordlists)
             window["-WL_LABEL-"].update(
                 "Wordlists: " + ", ".join(os.path.basename(w) for w in default_wordlists)
             )
 
-        # -------------------------------------------
         # Begin testing
-        # -------------------------------------------
         if event == "-BEGIN-" and not testing:
             missing_files = [wl for wl in default_wordlists if not os.path.exists(wl)]
             if missing_files:
@@ -177,12 +152,16 @@ def method_default_wordlist(file_path, username):
                 )
                 continue
 
-            # Log test execution
-            add_test_log(
-                username=username,
-                method="default_wordlist",
-                target_file=file_path
-            )
+            add_test_log(username=username, method="default_wordlist", target_file=file_path)
+
+            test_function = get_test_function(file_path)
+            if not test_function:
+                sg.popup_error("Unsupported file type!")
+                continue
+
+            if not is_file_protected(file_path):
+                window["-RESULT-"].update("✔ No password required")
+                continue
 
             testing = True
             progress_value = 0
@@ -190,48 +169,35 @@ def method_default_wordlist(file_path, username):
             window["-RESULT-"].update("")
             window["-PROG-"].update(0)
 
-            test_function = get_test_function(file_path)
+            # Run cracking in background thread
+            threading.Thread(
+                target=run_cracking_thread,
+                args=(file_path, default_wordlists, test_function, window),
+                daemon=True
+            ).start()
 
-            if not test_function:
-                testing = False
-                continue
+        # Update progress
+        if event == "-PROGRESS-" and testing:
+            progress_value = min(int(values[event] * 100), 99)
+            window["-PROG-"].update(progress_value)
 
-            if not is_file_protected(file_path):
-                window["-RESULT-"].update("✔ No password required")
-                testing = False
-                continue
-
-            password, success = default_wordlist_crack(
-                file_path,
-                default_wordlists,
-                test_function,
-                window,
-                thread_limit=2
-            )
-
+        # Handle finished cracking
+        if event == "-DONE-" and testing:
+            password, success = values[event]
+            testing = False
             window["-STATUS-"].update("Status: Completed")
             window["-PROG-"].update(100)
-
             if success:
-                window["-RESULT-"].update(f"✔ Password found: {password}")
+                window["-RESULT-"].update(f"✔ Password found: {password}", text_color="limegreen")
             else:
                 window["-RESULT-"].update("✘ Password NOT found")
-
-            testing = False
-
-        # -------------------------------------------
-        # Progress update from worker threads
-        # -------------------------------------------
-        if event == "-PROGRESS-" and testing:
-            progress_value = min(progress_value + 1, 99)
-            window["-PROG-"].update(progress_value)
 
     window.close()
 
 
-# -------------------------------------------------------
+# -----------------------------
 # TEST RUN
-# -------------------------------------------------------
+# -----------------------------
 if __name__ == "__main__":
-    target_file = r"C:\Users\ahmed\Desktop\New folder (2)\Target\New folder (4).7z"
+    target_file = r"C:/Users/ahmed/Desktop/New folder (2)/Target/New folder (3).zip"
     method_default_wordlist(target_file, username="admin")

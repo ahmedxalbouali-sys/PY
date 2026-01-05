@@ -12,14 +12,12 @@ from DefaultWordlistService import (
 # Centralized logging service
 from logging_service import add_test_log
 
-
 # =================================================
 # POPUP: INPUT MULTIPLE PASSWORD ELEMENTS
 # =================================================
 def implement_elements_popup():
     """
     Modal popup that allows the user to input password elements.
-
     Each line represents one element (name, date, keyword, etc.).
 
     Returns:
@@ -62,15 +60,13 @@ def implement_elements_popup():
             window.close()
             return elements
 
-
 # =================================================
 # THREAD: GENERATE CUSTOM WORDLIST
 # =================================================
 def run_Custom_generation(elements, output_path, window):
     """
     Background thread responsible for generating the custom wordlist.
-
-    Communicates completion or error back to the GUI thread.
+    Only communicates completion or error via window.write_event_value().
     """
     try:
         generate_custom_wordlist(elements, output_file=output_path)
@@ -78,14 +74,14 @@ def run_Custom_generation(elements, output_path, window):
     except Exception as e:
         window.write_event_value("-GEN_ERROR-", str(e))
 
-
 # =================================================
 # THREAD: RUN PASSWORD CRACKING
 # =================================================
 def run_default_crack(file_path, wordlist_file, window):
     """
-    Background thread that runs the cracking engine
-    using the generated wordlist.
+    Background thread that runs the cracking engine using the generated wordlist.
+    DOES NOT call window.read() inside the thread.
+    Progress and results are sent via window.write_event_value().
     """
     test_function = get_test_function(file_path)
 
@@ -97,6 +93,7 @@ def run_default_crack(file_path, wordlist_file, window):
         window.write_event_value("-CRACK_DONE-", ("✔ No password required", None))
         return
 
+    # Run cracking engine
     password, success = default_wordlist_crack(
         file_path,
         [wordlist_file],
@@ -105,11 +102,14 @@ def run_default_crack(file_path, wordlist_file, window):
         thread_limit=2
     )
 
+    # Treat any returned password as success
+    if password:
+        success = True
+
     if success:
         window.write_event_value("-CRACK_DONE-", (f"✔ Password FOUND: {password}", password))
     else:
         window.write_event_value("-CRACK_DONE-", ("✘ Password NOT found", None))
-
 
 # =================================================
 # MAIN GUI FUNCTION: Custom METHOD
@@ -134,8 +134,6 @@ def method_Custom(file_path, username="guest"):
     running_gen = False           # Generation thread active flag
     running_crack = False         # Cracking thread active flag
     generated_wordlist = None     # Path to generated temporary wordlist
-
-    # Default output filename (automatic, no user choice)
     default_output = "custom_Custom_wordlist.txt"
     progress_value = 0
 
@@ -147,11 +145,7 @@ def method_Custom(file_path, username="guest"):
         [sg.Text(file_path, key="-FILE-", size=(60, 1), text_color="white")],
         [sg.Button("Change File", key="-CHANGE-")],
         [sg.HorizontalSeparator()],
-
-        # ---- HIDDEN OUTPUT FILE FIELD (REQUIRED BY LOGIC) ----
-        # User does NOT see or change this, but logic depends on it
         [sg.Input(default_output, key="-OUT-", visible=False, disabled=True)],
-
         [sg.Text("Progress:", font=("Arial", 11))],
         [sg.ProgressBar(
             100,
@@ -168,7 +162,6 @@ def method_Custom(file_path, username="guest"):
             font=("Arial", 11, "bold")
         )],
         [sg.HorizontalSeparator()],
-
         [
             sg.Button("Implement Elements", key="-IMP-"),
             sg.Push(),
@@ -180,14 +173,11 @@ def method_Custom(file_path, username="guest"):
     window = sg.Window("Custom Wordlist Generator", layout, finalize=True)
 
     # =================================================
-    # EVENT LOOP
+    # EVENT LOOP (MAIN THREAD)
     # =================================================
     while True:
         event, values = window.read(timeout=100)
 
-        # --------------------------
-        # Exit handling
-        # --------------------------
         if event in (sg.WINDOW_CLOSED, "-CANCEL-"):
             break
 
@@ -223,7 +213,6 @@ def method_Custom(file_path, username="guest"):
             output_path = values["-OUT-"].strip()
             generated_wordlist = output_path
 
-            # ---- LOG TEST ATTEMPT (ONCE) ----
             add_test_log(
                 username=username,
                 method="Custom",
@@ -232,10 +221,7 @@ def method_Custom(file_path, username="guest"):
 
             running_gen = True
             progress_value = 0
-            window["-STATUS-"].update(
-                "Phase 1: Generating custom wordlist...",
-                text_color="#00BFFF"
-            )
+            window["-STATUS-"].update("Phase 1: Generating custom wordlist...", text_color="#00BFFF")
             window["-PROG-"].update(progress_value)
 
             threading.Thread(
@@ -245,17 +231,12 @@ def method_Custom(file_path, username="guest"):
             ).start()
 
         # --------------------------
-        # Generation completed
+        # Handle generation finished
         # --------------------------
         if event == "-GEN_DONE-":
             running_gen = False
             running_crack = True
-
-            window["-STATUS-"].update(
-                "Phase 2: Testing passwords...",
-                text_color="#FFA500"
-            )
-
+            window["-STATUS-"].update("Phase 2: Testing passwords...", text_color="#FFA500")
             threading.Thread(
                 target=run_default_crack,
                 args=(file_path, values[event], window),
@@ -263,7 +244,7 @@ def method_Custom(file_path, username="guest"):
             ).start()
 
         # --------------------------
-        # Generation error
+        # Handle generation error
         # --------------------------
         if event == "-GEN_ERROR-":
             running_gen = False
@@ -271,7 +252,7 @@ def method_Custom(file_path, username="guest"):
             sg.popup_error(values[event])
 
         # --------------------------
-        # Cracking completed
+        # Handle cracking finished
         # --------------------------
         if event == "-CRACK_DONE-":
             running_crack = False
@@ -280,7 +261,6 @@ def method_Custom(file_path, username="guest"):
             window["-STATUS-"].update("Completed", text_color="#32CD32")
             window["-PROG-"].update(100)
 
-            # ---- DELETE GENERATED WORDLIST ----
             if generated_wordlist and os.path.exists(generated_wordlist):
                 try:
                     os.remove(generated_wordlist)
@@ -293,22 +273,20 @@ def method_Custom(file_path, username="guest"):
                 sg.popup_ok("❌ Password NOT found", title="Result")
 
         # --------------------------
-        # Cracking error
+        # Handle cracking error
         # --------------------------
         if event == "-CRACK_ERROR-":
             running_crack = False
-
             if generated_wordlist and os.path.exists(generated_wordlist):
                 try:
                     os.remove(generated_wordlist)
                 except Exception:
                     pass
-
             window["-STATUS-"].update("Cracking failed", text_color="red")
             sg.popup_error(values[event])
 
         # --------------------------
-        # Progress animation
+        # Animate progress bar
         # --------------------------
         if running_gen or running_crack:
             progress_value = (progress_value + 2) % 101
@@ -321,5 +299,5 @@ def method_Custom(file_path, username="guest"):
 # TEST RUN
 # =================================================
 if __name__ == "__main__":
-    target_file = "C:/Users/ahmed/Desktop/Target/test.zip"
+    target_file = r"C:/Users/ahmed/Desktop/New folder (2)/Target/rockyou.zip"
     method_Custom(target_file, username="admin")
