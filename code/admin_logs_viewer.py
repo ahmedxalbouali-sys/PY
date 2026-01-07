@@ -23,9 +23,9 @@ def fetch_all_logs():
 
         for log in cursor:
             username = log.get("username", "UNKNOWN")
-            test_method = log.get("method", "UNKNOWN")  # 'method' field in logs
-            file_path = log.get("target_file", "UNKNOWN")  # match logging schema
-            timestamp = log.get("timestamp")
+            test_method = log.get("method", "UNKNOWN")  
+            file_path = log.get("target_file", "UNKNOWN")  
+            timestamp = log.get("timestamp", "UNKNOWN")
 
             # Format timestamp nicely
             if isinstance(timestamp, datetime):
