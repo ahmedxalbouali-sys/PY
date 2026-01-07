@@ -37,22 +37,6 @@ def _get_logs_collection():
 # PUBLIC: add a log entry
 # -------------------------------------------------------
 def add_test_log(username, method, target_file):
-    """
-    Insert a test attempt log into the database.
-
-    This function should be called WHENEVER a user
-    starts a password testing method (success or failure).
-
-    PARAMETERS:
-        username (str): The username performing the test
-        method (str): Name of the testing method used
-                      (e.g. 'default_wordlist', 'hybrid')
-        target_file (str): Full path of the tested file
-
-    RETURNS:
-        None
-    """
-
     if not username or not method or not target_file:
         # We silently ignore invalid logs to avoid crashing tests
         return

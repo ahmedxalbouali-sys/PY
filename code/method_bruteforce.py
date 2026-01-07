@@ -1,24 +1,3 @@
-"""
-method_bruteforce.py
-====================
-
-Main GUI for brute-force execution using FreeSimpleGUI.
-
-Features:
-- File selection
-- Advanced configuration
-- Thread count control
-- Accurate progress tracking
-- Safe cancellation
-- Clear result display
-
-Logging:
-- Adds a test attempt log when "Execute" is clicked (username, method, file_path)
-
-Author: Ahmed Bouali
-Date: 2025-12-22
-"""
-
 import FreeSimpleGUI as sg
 import threading
 

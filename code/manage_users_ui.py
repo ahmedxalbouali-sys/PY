@@ -1,6 +1,10 @@
 import FreeSimpleGUI as sg
 import bcrypt
+
+# MongoDB connection helper
 from db.mongo import get_db
+
+# User creation logic (registration)
 from register import create_user
 
 
@@ -9,41 +13,47 @@ from register import create_user
 # --------------------------------------------------------
 def manage_users_ui():
     """
-    Admin UI to manage users.
+    Graphical admin interface to manage application users.
 
     FEATURES:
-    - Load users from MongoDB
-    - Select a user from list
-    - Register new user
-    - Edit user (username, role, optional password)
-    - Delete user with confirmation
+    - Display users from MongoDB
+    - Register new users
+    - Edit existing users (username, role, optional password)
+    - Delete users with confirmation
     """
 
+    # Set GUI theme
     sg.theme("DarkBlue3")
 
     # ----------------------------------------------------
-    # HELPER: LOAD USERS FROM DATABASE
+    # HELPER FUNCTION: LOAD USERS FROM DATABASE
     # ----------------------------------------------------
     def load_users():
         """
-        Fetch users from DB and return display-friendly strings.
+        Fetch all users from MongoDB and format them
+        for display inside the Listbox.
         """
         db = get_db()
+
+        # Only fetch username and role (hide _id)
         users = db.users.find({}, {"_id": 0, "username": 1, "role": 1})
+
+        # Convert DB records to display strings
         return [f"{u['username']} ({u['role']})" for u in users]
 
     # ----------------------------------------------------
-    # INITIAL DATA LOAD
+    # INITIAL USER LOAD
     # ----------------------------------------------------
     users_list = load_users()
 
     # ----------------------------------------------------
-    # LAYOUT
+    # WINDOW LAYOUT
     # ----------------------------------------------------
     layout = [
         [sg.Text("Manage Users", font=("Arial", 14, "bold"))],
         [sg.HorizontalSeparator()],
 
+        # Listbox showing all users
         [sg.Listbox(
             values=users_list,
             size=(40, 10),
@@ -53,6 +63,7 @@ def manage_users_ui():
 
         [sg.HorizontalSeparator()],
 
+        # Action buttons
         [
             sg.Button("Register New User"),
             sg.Button("Edit Selected User"),
@@ -60,6 +71,7 @@ def manage_users_ui():
         ]
     ]
 
+    # Create the main window
     window = sg.Window(
         "Manage Users",
         layout,
@@ -69,13 +81,13 @@ def manage_users_ui():
     )
 
     # ----------------------------------------------------
-    # EVENT LOOP
+    # MAIN EVENT LOOP
     # ----------------------------------------------------
     while True:
         event, values = window.read(timeout=100)
 
         # -----------------------------
-        # Exit
+        # Exit application
         # -----------------------------
         if event == sg.WINDOW_CLOSED:
             window.close()
@@ -85,57 +97,78 @@ def manage_users_ui():
         # REGISTER NEW USER
         # =================================================
         if event == "Register New User":
+
+            # Registration form layout
             reg_layout = [
                 [sg.Text("Username"), sg.Input(key="-R_USER-")],
                 [sg.Text("Password"), sg.Input(password_char="*", key="-R_PASS-")],
-                [sg.Text("Role"), sg.Combo(["user", "admin"], default_value="user", key="-R_ROLE-")],
+                [sg.Text("Role"),
+                 sg.Combo(["user", "admin"], default_value="user", key="-R_ROLE-")],
                 [sg.Button("Create"), sg.Button("Cancel")]
             ]
 
+            # Modal window blocks interaction with main window
             reg_win = sg.Window("Register User", reg_layout, modal=True)
 
             while True:
                 ev, vals = reg_win.read()
+
+                # Close or cancel registration
                 if ev in (sg.WINDOW_CLOSED, "Cancel"):
                     break
 
+                # Attempt to create user
                 if ev == "Create":
                     success, msg = create_user(
                         vals["-R_USER-"],
                         vals["-R_PASS-"],
                         vals["-R_ROLE-"]
                     )
+
+                    # Show success or error message
                     sg.popup(msg)
+
                     if success:
                         break
 
             reg_win.close()
+
+            # Refresh user list after registration
             window["-USER_LIST-"].update(load_users())
 
         # =================================================
         # EDIT SELECTED USER
         # =================================================
         if event == "Edit Selected User":
+
+            # Ensure a user is selected
             if not values["-USER_LIST-"]:
                 sg.popup("Please select a user first.")
                 continue
 
+            # Extract username from display string
             selected = values["-USER_LIST-"][0]
             old_username = selected.split(" ")[0]
 
             db = get_db()
             user = db.users.find_one({"username": old_username})
 
+            # User may have been deleted externally
             if not user:
                 sg.popup_error("User no longer exists.")
                 window["-USER_LIST-"].update(load_users())
                 continue
 
+            # Edit form layout
             edit_layout = [
-                [sg.Text("New Username"), sg.Input(user["username"], key="-E_USER-")],
-                [sg.Text("New Password"), sg.Input(password_char="*", key="-E_PASS-")],
+                [sg.Text("New Username"),
+                 sg.Input(user["username"], key="-E_USER-")],
+                [sg.Text("New Password"),
+                 sg.Input(password_char="*", key="-E_PASS-")],
                 [sg.Text("Role"),
-                 sg.Combo(["user", "admin"], default_value=user["role"], key="-E_ROLE-")],
+                 sg.Combo(["user", "admin"],
+                          default_value=user["role"],
+                          key="-E_ROLE-")],
                 [sg.Button("Update"), sg.Button("Cancel")]
             ]
 
@@ -143,26 +176,31 @@ def manage_users_ui():
 
             while True:
                 ev, vals = edit_win.read()
+
                 if ev in (sg.WINDOW_CLOSED, "Cancel"):
                     break
 
                 if ev == "Update":
+
+                    # Username must not be empty
                     if not vals["-E_USER-"].strip():
                         sg.popup_error("Username cannot be empty.")
                         continue
 
+                    # Data to update
                     update_data = {
                         "username": vals["-E_USER-"].strip(),
                         "role": vals["-E_ROLE-"]
                     }
 
-                    # Only update password if explicitly provided
+                    # Only hash and update password if provided
                     if vals["-E_PASS-"]:
                         update_data["password"] = bcrypt.hashpw(
                             vals["-E_PASS-"].encode("utf-8"),
                             bcrypt.gensalt()
                         )
 
+                    # Apply update in MongoDB
                     db.users.update_one(
                         {"username": old_username},
                         {"$set": update_data}
@@ -172,12 +210,16 @@ def manage_users_ui():
                     break
 
             edit_win.close()
+
+            # Refresh list after update
             window["-USER_LIST-"].update(load_users())
 
         # =================================================
-        # DELETE USER
+        # DELETE SELECTED USER
         # =================================================
         if event == "Delete Selected User":
+
+            # Ensure a user is selected
             if not values["-USER_LIST-"]:
                 sg.popup("Please select a user first.")
                 continue
@@ -185,6 +227,7 @@ def manage_users_ui():
             selected = values["-USER_LIST-"][0]
             username = selected.split(" ")[0]
 
+            # Confirmation dialog
             confirm = sg.popup_yes_no(
                 f"Are you sure you want to delete user:\n\n{username} ?",
                 title="Confirm Delete"
@@ -193,14 +236,17 @@ def manage_users_ui():
             if confirm == "Yes":
                 db = get_db()
                 db.users.delete_one({"username": username})
+
                 sg.popup("User deleted successfully.")
+
+                # Refresh list after deletion
                 window["-USER_LIST-"].update(load_users())
 
     window.close()
 
 
 # --------------------------------------------------------
-# TEST RUN
+# TEST RUN (direct execution)
 # --------------------------------------------------------
 if __name__ == "__main__":
     manage_users_ui()
