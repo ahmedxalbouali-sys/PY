@@ -18,8 +18,11 @@ from logging_service import add_test_log
 # ==========================================================
 def advanced_settings_popup(min_len, max_len, threads, mask):
     """
-    Allows the user to configure advanced brute-force options.
-    NOTE: This popup is ONLY for settings, NOT for results.
+    Modal popup used ONLY to configure brute-force parameters.
+
+    Returns:
+        (min_len, max_len, threads, mask_string)
+        or None if the user cancels.
     """
 
     layout = [
@@ -42,21 +45,23 @@ def advanced_settings_popup(min_len, max_len, threads, mask):
 
     while True:
         event, values = window.read()
+
         if event in (sg.WINDOW_CLOSED, "Cancel"):
             window.close()
             return None
 
         if event == "Apply":
             try:
-                window.close()
-                return (
+                result = (
                     int(values["-MIN-"]),
                     int(values["-MAX-"]),
                     int(values["-THREADS-"]),
                     values["-MASK-"]
                 )
+                window.close()
+                return result
             except ValueError:
-                sg.popup_error("Invalid numeric input")  # settings-only popup (OK)
+                sg.popup_error("Invalid numeric input")
 
 
 # ==========================================================
@@ -66,41 +71,61 @@ def method_bruteforce(file_path, username):
 
     sg.theme("DarkBlue3")
 
+    # --------------------------------------------------
+    # Runtime configuration (modifiable via popup)
+    # --------------------------------------------------
     min_len = DEFAULT_MIN_LEN
     max_len = DEFAULT_MAX_LEN
     threads = DEFAULT_THREADS
     mask_string = ""
 
-    progress = [0]
-    total = [1]
-    result = [None]
-    running = [False]
+    # --------------------------------------------------
+    # Shared state between GUI thread and engine thread
+    # --------------------------------------------------
+    tested = 0
+    total = 1
+    result = None
+    running = False
+
+    tested_lock = threading.Lock()
     stop_flag = threading.Event()
 
+    # --------------------------------------------------
+    # GUI layout
+    # --------------------------------------------------
     layout = [
         [sg.Text("Target file:", font=("Arial", 11, "bold"))],
         [sg.Text(file_path, size=(70, 1), key="-FILE-")],
         [sg.Button("Change target file")],
 
         [sg.HorizontalSeparator()],
+
         [sg.Text("Status:"), sg.Text("Idle", key="-STATUS-")],
         [sg.ProgressBar(100, size=(45, 20), key="-PROG-")],
-        [sg.Text("", key="-RESULT-", font=("Arial", 12, "bold"))],  # INLINE result display
+        [sg.Text("", key="-RESULT-", font=("Arial", 12, "bold"))],
 
-        [sg.Button("Advanced Settings"),
-         sg.Push(),
-         sg.Button("Execute"),
-         sg.Button("Cancel")]
+        [
+            sg.Button("Advanced Settings"),
+            sg.Push(),
+            sg.Button("Execute"),
+            sg.Button("Cancel")
+        ]
     ]
 
     window = sg.Window("Bruteforce Method", layout, finalize=True)
 
     # ======================================================
-    # PROGRESS CALLBACK
+    # PROGRESS CALLBACK (ENGINE → GUI STATE)
     # ======================================================
     def progress_cb(done, total_count):
-        progress[0] = done
-        total[0] = total_count
+        """
+        Called by the brute-force engine.
+        Must be extremely fast and non-blocking.
+        """
+        nonlocal tested, total
+        with tested_lock:
+            tested = done
+            total = total_count
 
     # ======================================================
     # ENGINE THREAD
@@ -108,11 +133,11 @@ def method_bruteforce(file_path, username):
     def run_engine():
         """
         Runs the brute-force engine in a background thread.
-        Returns:
-        - password (str) if found
-        - None if not found
+        The GUI thread never blocks on this.
         """
-        res = brute_force_attack(
+        nonlocal result, running
+
+        result = brute_force_attack(
             file_path=file_path,
             min_len=min_len,
             max_len=max_len,
@@ -123,68 +148,79 @@ def method_bruteforce(file_path, username):
             stop_flag=stop_flag
         )
 
-        result[0] = res
-        running[0] = False
+        running = False
 
     # ======================================================
-    # EVENT LOOP
+    # MAIN GUI EVENT LOOP
     # ======================================================
     while True:
         event, _ = window.read(timeout=100)
 
+        # --------------------------
+        # Exit / cancel
+        # --------------------------
         if event in (sg.WINDOW_CLOSED, "Cancel"):
             stop_flag.set()
             break
 
-        if event == "Change target file" and not running[0]:
-            new = sg.popup_get_file("Select file")
-            if new:
-                file_path = new
+        # --------------------------
+        # Change target file
+        # --------------------------
+        if event == "Change target file" and not running:
+            new_file = sg.popup_get_file("Select file")
+            if new_file:
+                file_path = new_file
                 window["-FILE-"].update(file_path)
 
-        if event == "Advanced Settings" and not running[0]:
+        # --------------------------
+        # Advanced settings
+        # --------------------------
+        if event == "Advanced Settings" and not running:
             res = advanced_settings_popup(min_len, max_len, threads, mask_string)
             if res:
                 min_len, max_len, threads, mask_string = res
 
-        if event == "Execute" and not running[0]:
-            # Log test attempt
+        # --------------------------
+        # Start brute-force attack
+        # --------------------------
+        if event == "Execute" and not running:
             add_test_log(
                 username=username,
                 method="bruteforce",
                 target_file=file_path
             )
 
+            tested = 0
+            total = 1
+            result = None
+            running = True
             stop_flag.clear()
-            progress[0] = 0
-            result[0] = None
-            running[0] = True
 
             window["-STATUS-"].update("Running...")
-            window["-RESULT-"].update("")  # clear old result
+            window["-RESULT-"].update("")
 
             threading.Thread(target=run_engine, daemon=True).start()
 
-        # -------------------------------
-        # LIVE PROGRESS UPDATE
-        # -------------------------------
-        if running[0]:
-            percent = int((progress[0] / max(total[0], 1)) * 100)
-            window["-PROG-"].update(percent)
-            window["-STATUS-"].update(
-                f"Testing {progress[0]} / {max(total[0] - 10, 0)} +-10"
-            )
+        # --------------------------
+        # Live progress update
+        # --------------------------
+        if running:
+            with tested_lock:
+                percent = int((tested / max(total, 1)) * 100)
 
-        # -------------------------------
-        # FINAL RESULT (NO POPUP)
-        # -------------------------------
+            window["-PROG-"].update(percent)
+            window["-STATUS-"].update(f"Testing {tested} / {total}")
+
+        # --------------------------
+        # Final result display
+        # --------------------------
         else:
-            if result[0]:
+            if result:
                 window["-RESULT-"].update(
-                    f"✔ Password FOUND: {result[0]}",
+                    f"✔ Password FOUND: {result}",
                     text_color="limegreen"
                 )
-            elif progress[0] > 0:
+            elif tested > 0:
                 window["-RESULT-"].update(
                     "✘ Password NOT found",
                     text_color="red"
@@ -197,5 +233,7 @@ def method_bruteforce(file_path, username):
 # TEST RUN
 # =================================================
 if __name__ == "__main__":
-    file_path = "C:\\Users\\ahmed\\Desktop\\New folder (2)\\Target\\New folder (4).7z"
-    method_bruteforce(file_path, username="admin")
+    method_bruteforce(
+        r"C:/Users/ahmed/Desktop/New folder (2)/Target/Rapport_23_24_VF_protected.pdf",
+        username="admin"
+    )
